@@ -7,25 +7,33 @@ import KpiCard from '../components/KpiCard'
 import AgentCard from '../components/AgentCard'
 import Heatmap from '../components/Heatmap'
 import NetworkGraph from '../components/NetworkGraph'
+import TaskRunner from '../components/TaskRunner'
 import { TrustTrendChart, CompletionAreaChart, ResponseBarChart, TrustDistributionChart } from '../components/Charts'
-import { AGENTS, SWARMS, AUDIT_LOG, STATUS_META, trustColor } from '../data/agents'
+import { STATUS_META, trustColor } from '../data/agents'
+import { useData } from '../DataContext'
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('7d')
+  const { agents, audits, mode } = useData()
 
   const stats = useMemo(() => {
-    const active = AGENTS.filter((a) => a.status === 'active').length
-    const degraded = AGENTS.filter((a) => a.status === 'degraded').length
-    const stalled = AGENTS.filter((a) => a.status === 'stalled').length
-    const avgTrust = AGENTS.reduce((s, a) => s + a.trustScore, 0) / AGENTS.length
-    const avgResp = AGENTS.reduce((s, a) => s + a.avgResponseTime, 0) / AGENTS.length
-    const avgCompletion = AGENTS.reduce((s, a) => s + a.completionRate, 0) / AGENTS.length
-    const totalTasks = AGENTS.reduce((s, a) => s + a.tasksCompleted, 0)
-    const topAgents = [...AGENTS].sort((a, b) => b.trustScore - a.trustScore).slice(0, 4)
+    if (agents.length === 0) return null
+    const active = agents.filter((a) => a.status === 'active').length
+    const degraded = agents.filter((a) => a.status === 'degraded').length
+    const stalled = agents.filter((a) => a.status === 'stalled').length
+    const avgTrust = agents.reduce((s, a) => s + a.trustScore, 0) / agents.length
+    const avgResp = agents.reduce((s, a) => s + a.avgResponseTime, 0) / agents.length
+    const avgCompletion = agents.reduce((s, a) => s + a.completionRate, 0) / agents.length
+    const totalTasks = agents.reduce((s, a) => s + a.tasksCompleted, 0)
+    const topAgents = [...agents].sort((a, b) => b.trustScore - a.trustScore).slice(0, 4)
     return { active, degraded, stalled, avgTrust, avgResp, avgCompletion, totalTasks, topAgents }
-  }, [])
+  }, [agents])
 
-  const spark = AGENTS[0].history.trust.map((d) => d.value)
+  if (!stats) {
+    return <div className="text-center py-24 text-slate-400 text-sm">Loading reputation data…</div>
+  }
+
+  const spark = agents[0].history.trust.map((d) => d.value)
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
@@ -34,7 +42,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Reputation Overview</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Live trust, completion and latency signals across {AGENTS.length} audited agents.
+            Live trust, completion and latency signals across {agents.length} audited agents.
           </p>
         </div>
         <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1">
@@ -70,7 +78,7 @@ export default function Dashboard() {
           unit="%"
           delta={1.8}
           deltaLabel="vs last week"
-          spark={AGENTS[1].history.completion.map((d) => d.value)}
+          spark={agents[1].history.completion.map((d) => d.value)}
           icon={CheckCircle2}
           accent="#10b981"
         />
@@ -80,7 +88,7 @@ export default function Dashboard() {
           unit="s"
           delta={-6.5}
           deltaLabel="faster than last week"
-          spark={AGENTS[2].history.response.map((d) => d.value)}
+          spark={agents[2].history.response.map((d) => d.value)}
           icon={Timer}
           accent="#8b5cf6"
         />
@@ -90,7 +98,7 @@ export default function Dashboard() {
           unit=""
           delta={12.4}
           deltaLabel="vs last week"
-          spark={AGENTS[3].history.completion.map((d) => d.value)}
+          spark={agents[3].history.completion.map((d) => d.value)}
           icon={RefreshCw}
           accent="#f59e0b"
         />
@@ -99,7 +107,7 @@ export default function Dashboard() {
       {/* Fleet status strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Object.entries(STATUS_META).map(([key, meta]) => {
-          const count = key === 'active' ? stats.active : key === 'degraded' ? stats.degraded : key === 'stalled' ? stats.stalled : AGENTS.filter((a) => a.status === 'idle').length
+          const count = key === 'active' ? stats.active : key === 'degraded' ? stats.degraded : key === 'stalled' ? stats.stalled : agents.filter((a) => a.status === 'idle').length
           return (
             <div key={key} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center gap-3">
               <span className="w-2.5 h-2.5 rounded-full" style={{ background: meta.color }} />
@@ -119,21 +127,21 @@ export default function Dashboard() {
             <h3 className="text-sm font-semibold text-slate-800">Trust trend — fleet average</h3>
             <span className="text-[10px] text-slate-400">30 days</span>
           </div>
-          <TrustTrendChart data={AGENTS[0].history.trust} />
+          <TrustTrendChart data={agents[0].history.trust} />
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-slate-800">Completion rate — fleet average</h3>
             <span className="text-[10px] text-slate-400">30 days</span>
           </div>
-          <CompletionAreaChart data={AGENTS[1].history.completion} />
+          <CompletionAreaChart data={agents[1].history.completion} />
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold text-slate-800">Response time — fleet average</h3>
             <span className="text-[10px] text-slate-400">30 days</span>
           </div>
-          <ResponseBarChart data={AGENTS[2].history.response} />
+          <ResponseBarChart data={agents[2].history.response} />
         </div>
       </div>
 
@@ -142,14 +150,17 @@ export default function Dashboard() {
         <div className="xl:col-span-3 bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-800">Swarm topology & peer audits</h3>
-            <Link to="/swarms" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+            <Link to="/app/swarms" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
               Explore swarms <ArrowRight size={12} />
             </Link>
           </div>
           <NetworkGraph height={420} />
         </div>
-        <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5">
-          <Heatmap data={AGENTS[0].heatmap} title="Fleet activity — 7 days × 24h" />
+        <div className="xl:col-span-2 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5">
+            <Heatmap data={agents[0].heatmap} title="Fleet activity — 7 days × 24h" />
+          </div>
+          <TaskRunner />
         </div>
       </div>
 
@@ -157,13 +168,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <h3 className="text-sm font-semibold text-slate-800 mb-2">Trust distribution</h3>
-          <TrustDistributionChart agents={AGENTS} />
+          <TrustDistributionChart agents={agents} />
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-800">Top trusted agents</h3>
-            <Link to="/marketplace" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+            <Link to="/app/marketplace" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
               Marketplace <ArrowRight size={12} />
             </Link>
           </div>
@@ -171,7 +182,7 @@ export default function Dashboard() {
             {stats.topAgents.map((a, i) => (
               <Link
                 key={a.id}
-                to={`/agents/${a.id}`}
+                to={`/app/agents/${a.id}`}
                 className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors"
               >
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: a.stage.color }}>
@@ -195,12 +206,12 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-slate-800">Live audit feed</h3>
-            <Link to="/audits" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+            <Link to="/app/audits" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
               Ledger <ArrowRight size={12} />
             </Link>
           </div>
           <div className="space-y-3">
-            {AUDIT_LOG.slice(0, 5).map((ev) => (
+            {audits.slice(0, 5).map((ev) => (
               <div key={ev.id} className="flex gap-2.5">
                 <span
                   className={`mt-0.5 shrink-0 w-2 h-2 rounded-full ${
@@ -230,7 +241,7 @@ export default function Dashboard() {
           <h3 className="text-sm font-semibold text-slate-800 inline-flex items-center gap-2">
             <Bot size={15} className="text-brand-600" /> Featured agents
           </h3>
-          <Link to="/marketplace" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
+          <Link to="/app/marketplace" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
             View all →
           </Link>
         </div>

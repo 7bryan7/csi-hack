@@ -1,31 +1,33 @@
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Bot, ShieldCheck, CheckCircle2, Timer, RefreshCw, Zap, DollarSign, Activity } from 'lucide-react'
-import { getAgent, AGENTS, STATUS_META, trustColor, fmtMs, AUDIT_LOG } from '../data/agents'
+import { STATUS_META, trustColor, fmtMs } from '../data/agents'
+import { useData } from '../DataContext'
 import { TrustTrendChart, CompletionAreaChart, ResponseBarChart } from '../components/Charts'
 import Heatmap from '../components/Heatmap'
 import AgentCard from '../components/AgentCard'
 
 export default function AgentDetail() {
   const { id } = useParams()
-  const agent = getAgent(id)
+  const { agents, audits } = useData()
+  const agent = agents.find((a) => a.id === id)
 
   if (!agent) {
     return (
       <div className="max-w-[1200px] mx-auto text-center py-24">
         <Bot size={40} className="mx-auto text-slate-300 mb-3" />
         <div className="font-semibold text-slate-700">Agent not found</div>
-        <Link to="/marketplace" className="text-sm text-brand-600 font-semibold mt-2 inline-block">← Back to marketplace</Link>
+        <Link to="/app/marketplace" className="text-sm text-brand-600 font-semibold mt-2 inline-block">← Back to marketplace</Link>
       </div>
     )
   }
 
   const meta = STATUS_META[agent.status]
-  const peers = agent.peers.map(getAgent).filter(Boolean)
-  const audits = AUDIT_LOG.filter((e) => e.agent.id === agent.id || e.auditor.id === agent.id)
+  const peers = agent.peers.map((pid) => agents.find((a) => a.id === pid)).filter(Boolean)
+  const agentAudits = audits.filter((e) => e.agent.id === agent.id || e.auditor.id === agent.id)
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6">
-      <Link to="/marketplace" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-brand-600 font-medium">
+      <Link to="/app/marketplace" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-brand-600 font-medium">
         <ArrowLeft size={15} /> Back to marketplace
       </Link>
 
@@ -114,7 +116,7 @@ export default function AgentDetail() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {peers.map((p) => (
-                <Link key={p.id} to={`/agents/${p.id}`} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 transition-colors">
+                <Link key={p.id} to={`/app/agents/${p.id}`} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 transition-colors">
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white" style={{ background: p.stage.color }}>
                     <Bot size={16} />
                   </div>
@@ -137,13 +139,13 @@ export default function AgentDetail() {
         <div className="flex items-center gap-2 mb-4">
           <ShieldCheck size={16} className="text-brand-600" />
           <h3 className="text-sm font-semibold text-slate-800">Audit history</h3>
-          <span className="text-[10px] text-slate-400 ml-auto">{audits.length} events</span>
+          <span className="text-[10px] text-slate-400 ml-auto">{agentAudits.length} events</span>
         </div>
         {audits.length === 0 ? (
           <p className="text-sm text-slate-400">No audit events recorded for this agent.</p>
         ) : (
           <div className="space-y-2.5">
-            {audits.map((ev) => (
+            {agentAudits.map((ev) => (
               <div key={ev.id} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
                 <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${ev.verdict === 'pass' ? 'bg-emerald-500' : ev.verdict === 'warn' ? 'bg-amber-500' : 'bg-red-500'}`} />
                 <div className="flex-1 min-w-0">
@@ -167,7 +169,7 @@ export default function AgentDetail() {
       <div>
         <h3 className="text-sm font-semibold text-slate-800 mb-3">Similar agents in {agent.stage.label}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {AGENTS.filter((a) => a.stage.id === agent.stage.id && a.id !== agent.id)
+          {agents.filter((a) => a.stage.id === agent.stage.id && a.id !== agent.id)
             .slice(0, 3)
             .map((a) => <AgentCard key={a.id} agent={a} compact />)}
         </div>

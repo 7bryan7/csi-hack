@@ -1,14 +1,34 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, Store, Network, ShieldCheck, Settings, Search, Bell, Bot } from 'lucide-react'
+import { useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, Store, Network, ShieldCheck, Settings, Bot, LogOut, Cpu } from 'lucide-react'
+import { useData } from '../DataContext'
+import { useAuth } from '../AuthContext'
+import SettingsModal from './SettingsModal'
+import GlobalSearch from './GlobalSearch'
+import NotificationsPanel from './NotificationsPanel'
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/marketplace', label: 'Agent Marketplace', icon: Store },
-  { to: '/swarms', label: 'Swarm Network', icon: Network },
-  { to: '/audits', label: 'Audit Ledger', icon: ShieldCheck },
+  { to: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/app/marketplace', label: 'Agent Marketplace', icon: Store },
+  { to: '/app/swarms', label: 'Swarm Network', icon: Network },
+  { to: '/app/audits', label: 'Audit Ledger', icon: ShieldCheck },
+  { to: '/app/connections', label: 'AI Models', icon: Cpu },
 ]
 
+const MODE_META = {
+  loading: { label: 'Connecting…', color: '#94a3b8', bg: '#f1f5f9' },
+  simulated: { label: 'Simulated runtime', color: '#f59e0b', bg: '#fffbeb' },
+  gemini: { label: 'Gemini live', color: '#10b981', bg: '#ecfdf5' },
+  fallback: { label: 'Demo data (backend offline)', color: '#ef4444', bg: '#fef2f2' },
+  offline: { label: 'Demo data', color: '#ef4444', bg: '#fef2f2' },
+}
+
 export default function Layout() {
+  const { mode, agents, swarms, auditTotal } = useData()
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const meta = MODE_META[mode] || MODE_META.fallback
   return (
     <div className="flex h-full">
       {/* Sidebar */}
@@ -47,13 +67,17 @@ export default function Layout() {
           <div className="rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 p-4 text-white">
             <div className="text-xs font-semibold mb-1">Protocol v2.4</div>
             <p className="text-[11px] text-brand-100 leading-relaxed">
-              Peer-audited reputation layer. 18 agents · 3 swarms · 412 audits today.
+              Peer-audited reputation layer. {agents.length} agents · {swarms.length} swarms ·{' '}
+              {auditTotal} audits.
             </p>
           </div>
-          <button className="mt-3 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors">
-            <Settings size={16} />
-            Settings
-          </button>
+          <button
+              onClick={() => setSettingsOpen(true)}
+              className="mt-3 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-colors"
+            >
+              <Settings size={16} />
+              Settings
+            </button>
         </div>
       </aside>
 
@@ -61,23 +85,40 @@ export default function Layout() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 shrink-0 bg-white/80 backdrop-blur border-b border-slate-200 flex items-center gap-4 px-6">
           <div className="flex-1 max-w-md relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              placeholder="Search agents, swarms, audits…"
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-slate-100 border border-transparent focus:bg-white focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
-            />
+            <GlobalSearch />
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 rounded-full px-3 py-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-dot" />
-              Live · 412 audits/hr
-            </div>
-            <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors">
-              <Bell size={17} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
-            </button>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-brand-600 flex items-center justify-center text-white text-xs font-bold">
-              BR
+            <span
+              className="inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3 py-1.5"
+              style={{ color: meta.color, background: meta.bg }}
+            >
+              <span className="w-2 h-2 rounded-full pulse-dot" style={{ background: meta.color }} />
+              {meta.label}
+            </span>
+            <NotificationsPanel />
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+              {user?.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name || 'user'}
+                  className="w-8 h-8 rounded-full ring-2 ring-white"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-brand-600 flex items-center justify-center text-white text-xs font-bold">
+                  {(user?.name || 'U').slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  signOut()
+                  navigate('/')
+                }}
+                title="Sign out"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <LogOut size={15} />
+              </button>
             </div>
           </div>
         </header>
@@ -86,6 +127,8 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }

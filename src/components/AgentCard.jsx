@@ -16,7 +16,7 @@ export default function AgentCard({ agent, compact = false }) {
 
   return (
     <div
-      onClick={() => navigate(`/agents/${agent.id}`)}
+      onClick={() => navigate(`/app/agents/${agent.id}`)}
       className="card-lift cursor-pointer bg-white rounded-2xl border border-slate-200 p-5 hover:border-brand-300"
     >
       <div className="flex items-start justify-between">

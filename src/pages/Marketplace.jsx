@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Search, SlidersHorizontal, Bot, ArrowUpDown, X, Scale } from 'lucide-react'
 import AgentCard from '../components/AgentCard'
-import { AGENTS, LIFECYCLE_STAGES, STATUS_META, trustColor } from '../data/agents'
+import { LIFECYCLE_STAGES, STATUS_META, trustColor } from '../data/agents'
+import { useData } from '../DataContext'
 
 const SORTS = [
   { id: 'trust', label: 'Trust score' },
@@ -11,6 +12,7 @@ const SORTS = [
 ]
 
 export default function Marketplace() {
+  const { agents } = useData()
   const [query, setQuery] = useState('')
   const [stage, setStage] = useState('all')
   const [status, setStatus] = useState('all')
@@ -19,7 +21,7 @@ export default function Marketplace() {
   const [compare, setCompare] = useState([])
 
   const filtered = useMemo(() => {
-    let list = AGENTS.filter((a) => {
+    let list = agents.filter((a) => {
       if (stage !== 'all' && a.stage.id !== stage) return false
       if (status !== 'all' && a.status !== status) return false
       if (a.trustScore < minTrust) return false
@@ -50,7 +52,7 @@ export default function Marketplace() {
     setCompare((c) => (c.includes(id) ? c.filter((x) => x !== id) : c.length >= 3 ? c : [...c, id]))
   }
 
-  const compareAgents = compare.map((id) => AGENTS.find((a) => a.id === id))
+  const compareAgents = compare.map((id) => agents.find((a) => a.id === id))
   const hasFilters = query || stage !== 'all' || status !== 'all' || minTrust > 0
 
   return (
@@ -65,7 +67,7 @@ export default function Marketplace() {
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 bg-white border border-slate-200 rounded-lg px-3 py-2">
           <Bot size={14} className="text-brand-600" />
-          <span className="font-semibold text-slate-800">{filtered.length}</span> of {AGENTS.length} agents
+          <span className="font-semibold text-slate-800">{filtered.length}</span> of {agents.length} agents
         </div>
       </div>
 

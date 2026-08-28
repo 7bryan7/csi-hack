@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force'
-import { AGENTS, trustColor, STATUS_META } from '../data/agents'
+import { trustColor, STATUS_META } from '../data/agents'
+import { useData } from '../DataContext'
 import { useNavigate } from 'react-router-dom'
 
 /**
@@ -12,16 +13,17 @@ export default function NetworkGraph({ height = 460 }) {
   const [selected, setSelected] = useState(null)
   const [hovered, setHovered] = useState(null)
   const navigate = useNavigate()
+  const { agents } = useData()
 
   useEffect(() => {
     const svg = svgRef.current
-    if (!svg) return
+    if (!svg || agents.length === 0) return
     const width = svg.clientWidth
     const h = height
 
-    const nodes = AGENTS.map((a) => ({ id: a.id, agent: a, x: width / 2, y: h / 2 }))
+    const nodes = agents.map((a) => ({ id: a.id, agent: a, x: width / 2, y: h / 2 }))
     const links = []
-    AGENTS.forEach((a) => {
+    agents.forEach((a) => {
       a.peers.forEach((pid) => {
         links.push({ source: a.id, target: pid })
       })
@@ -58,7 +60,7 @@ export default function NetworkGraph({ height = 460 }) {
     })
 
     return () => sim.stop()
-  }, [height])
+  }, [height, agents])
 
   const nodeRadius = (a) => 10 + (a.trustScore / 100) * 14
 
@@ -66,8 +68,8 @@ export default function NetworkGraph({ height = 460 }) {
     <div className="relative" style={{ height }}>
       <svg ref={svgRef} width="100%" height={height} className="block">
         <g className="network">
-          {AGENTS.flatMap((a) => a.peers.map((pid) => ({ a, pid }))).map(({ a, pid }, i) => {
-            const target = AGENTS.find((x) => x.id === pid)
+          {agents.flatMap((a) => a.peers.map((pid) => ({ a, pid }))).map(({ a, pid }, i) => {
+            const target = agents.find((x) => x.id === pid)
             const isHot = selected && (selected.id === a.id || selected.id === pid)
             return (
               <line
@@ -79,7 +81,7 @@ export default function NetworkGraph({ height = 460 }) {
               />
             )
           })}
-          {AGENTS.map((a) => {
+          {agents.map((a) => {
             const r = nodeRadius(a)
             const isSel = selected && selected.id === a.id
             const isNeighbor = selected && a.peers.includes(selected.id)
@@ -96,7 +98,7 @@ export default function NetworkGraph({ height = 460 }) {
                   e.stopPropagation()
                   setSelected(isSel ? null : a)
                 }}
-                onDoubleClick={() => navigate(`/agents/${a.id}`)}
+                onDoubleClick={() => navigate(`/app/agents/${a.id}`)}
               >
                 <circle r={r + 4} fill={trustColor(a.trustScore)} opacity={0.15} />
                 <circle r={r} fill="#fff" stroke={trustColor(a.trustScore)} strokeWidth={2.5} />
@@ -150,7 +152,7 @@ export default function NetworkGraph({ height = 460 }) {
                   </div>
                 </div>
                 <button
-                  onClick={() => navigate(`/agents/${a.id}`)}
+                  onClick={() => navigate(`/app/agents/${a.id}`)}
                   className="mt-2.5 w-full text-[11px] font-semibold text-brand-600 hover:text-brand-700"
                 >
                   Open agent profile →

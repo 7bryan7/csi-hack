@@ -2,12 +2,18 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Network, Activity, Zap, ArrowRight, Bot } from 'lucide-react'
 import NetworkGraph from '../components/NetworkGraph'
-import { SWARMS, AGENTS, getAgent, trustColor, STATUS_META } from '../data/agents'
+import { trustColor, STATUS_META } from '../data/agents'
+import { useData } from '../DataContext'
 
 export default function Swarms() {
-  const [selectedSwarm, setSelectedSwarm] = useState(SWARMS[0].id)
-  const swarm = SWARMS.find((s) => s.id === selectedSwarm)
-  const members = swarm.agents.map(getAgent)
+  const { swarms, agents } = useData()
+  const [selectedSwarm, setSelectedSwarm] = useState(swarms[0]?.id)
+  const swarm = swarms.find((s) => s.id === selectedSwarm) || swarms[0]
+  const members = swarm ? swarm.agents.map((id) => agents.find((a) => a.id === id)).filter(Boolean) : []
+
+  if (!swarm) {
+    return <div className="text-center py-24 text-slate-400 text-sm">Loading swarm data…</div>
+  }
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-6">
@@ -20,7 +26,7 @@ export default function Swarms() {
 
       {/* Swarm selector cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {SWARMS.map((s) => {
+        {swarms.map((s) => {
           const isSel = s.id === selectedSwarm
           const healthColor = s.health >= 85 ? '#10b981' : s.health >= 75 ? '#f59e0b' : '#ef4444'
           return (
@@ -72,7 +78,7 @@ export default function Swarms() {
                 return (
                   <Link
                     key={a.id}
-                    to={`/agents/${a.id}`}
+                    to={`/app/agents/${a.id}`}
                     className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors"
                   >
                     <div className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold text-slate-500 bg-slate-100">

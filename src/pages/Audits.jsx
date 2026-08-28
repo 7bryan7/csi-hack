@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle, Filter } from 'lucide-react'
-import { AUDIT_LOG, trustColor } from '../data/agents'
+import { trustColor } from '../data/agents'
+import { useData } from '../DataContext'
 
 const VERDICT_META = {
   pass: { label: 'Pass', color: '#10b981', bg: '#ecfdf5', icon: CheckCircle2 },
@@ -10,11 +11,12 @@ const VERDICT_META = {
 }
 
 export default function Audits() {
+  const { audits } = useData()
   const [verdict, setVerdict] = useState('all')
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
-    return AUDIT_LOG.filter((e) => {
+    return audits.filter((e) => {
       if (verdict !== 'all' && e.verdict !== verdict) return false
       if (query) {
         const q = query.toLowerCase()
@@ -29,9 +31,9 @@ export default function Audits() {
   }, [verdict, query])
 
   const counts = {
-    pass: AUDIT_LOG.filter((e) => e.verdict === 'pass').length,
-    warn: AUDIT_LOG.filter((e) => e.verdict === 'warn').length,
-    fail: AUDIT_LOG.filter((e) => e.verdict === 'fail').length,
+    pass: audits.filter((e) => e.verdict === 'pass').length,
+    warn: audits.filter((e) => e.verdict === 'warn').length,
+    fail: audits.filter((e) => e.verdict === 'fail').length,
   }
 
   return (
@@ -92,11 +94,11 @@ export default function Audits() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
-                  <Link to={`/agents/${ev.auditor.id}`} className="font-semibold text-slate-800 hover:text-brand-600">
+                  <Link to={`/app/agents/${ev.auditor.id}`} className="font-semibold text-slate-800 hover:text-brand-600">
                     {ev.auditor.name}
                   </Link>
                   <span className="text-slate-400">audited</span>
-                  <Link to={`/agents/${ev.agent.id}`} className="font-semibold text-slate-800 hover:text-brand-600">
+                  <Link to={`/app/agents/${ev.agent.id}`} className="font-semibold text-slate-800 hover:text-brand-600">
                     {ev.agent.name}
                   </Link>
                   <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style={{ color: m.color, background: m.bg }}>
