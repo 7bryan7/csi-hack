@@ -1,0 +1,245 @@
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  ShieldCheck, CheckCircle2, Timer, RefreshCw, Bot, ArrowRight, Activity,
+} from 'lucide-react'
+import KpiCard from '../components/KpiCard'
+import AgentCard from '../components/AgentCard'
+import Heatmap from '../components/Heatmap'
+import NetworkGraph from '../components/NetworkGraph'
+import { TrustTrendChart, CompletionAreaChart, ResponseBarChart, TrustDistributionChart } from '../components/Charts'
+import { AGENTS, SWARMS, AUDIT_LOG, STATUS_META, trustColor } from '../data/agents'
+
+export default function Dashboard() {
+  const [timeRange, setTimeRange] = useState('7d')
+
+  const stats = useMemo(() => {
+    const active = AGENTS.filter((a) => a.status === 'active').length
+    const degraded = AGENTS.filter((a) => a.status === 'degraded').length
+    const stalled = AGENTS.filter((a) => a.status === 'stalled').length
+    const avgTrust = AGENTS.reduce((s, a) => s + a.trustScore, 0) / AGENTS.length
+    const avgResp = AGENTS.reduce((s, a) => s + a.avgResponseTime, 0) / AGENTS.length
+    const avgCompletion = AGENTS.reduce((s, a) => s + a.completionRate, 0) / AGENTS.length
+    const totalTasks = AGENTS.reduce((s, a) => s + a.tasksCompleted, 0)
+    const topAgents = [...AGENTS].sort((a, b) => b.trustScore - a.trustScore).slice(0, 4)
+    return { active, degraded, stalled, avgTrust, avgResp, avgCompletion, totalTasks, topAgents }
+  }, [])
+
+  const spark = AGENTS[0].history.trust.map((d) => d.value)
+
+  return (
+    <div className="max-w-[1400px] mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Reputation Overview</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Live trust, completion and latency signals across {AGENTS.length} audited agents.
+          </p>
+        </div>
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1">
+          {['24h', '7d', '30d'].map((r) => (
+            <button
+              key={r}
+              onClick={() => setTimeRange(r)}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                timeRange === r ? 'bg-brand-600 text-white' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KpiCard
+          title="Avg Trust Score"
+          value={stats.avgTrust.toFixed(1)}
+          unit="/100"
+          delta={4.2}
+          deltaLabel="vs last week"
+          spark={spark}
+          icon={ShieldCheck}
+          accent="#3d6cec"
+        />
+        <KpiCard
+          title="Avg Completion"
+          value={stats.avgCompletion.toFixed(1)}
+          unit="%"
+          delta={1.8}
+          deltaLabel="vs last week"
+          spark={AGENTS[1].history.completion.map((d) => d.value)}
+          icon={CheckCircle2}
+          accent="#10b981"
+        />
+        <KpiCard
+          title="Avg Response"
+          value={(stats.avgResp / 1000).toFixed(2)}
+          unit="s"
+          delta={-6.5}
+          deltaLabel="faster than last week"
+          spark={AGENTS[2].history.response.map((d) => d.value)}
+          icon={Timer}
+          accent="#8b5cf6"
+        />
+        <KpiCard
+          title="Tasks Completed"
+          value={stats.totalTasks.toLocaleString()}
+          unit=""
+          delta={12.4}
+          deltaLabel="vs last week"
+          spark={AGENTS[3].history.completion.map((d) => d.value)}
+          icon={RefreshCw}
+          accent="#f59e0b"
+        />
+      </div>
+
+      {/* Fleet status strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Object.entries(STATUS_META).map(([key, meta]) => {
+          const count = key === 'active' ? stats.active : key === 'degraded' ? stats.degraded : key === 'stalled' ? stats.stalled : AGENTS.filter((a) => a.status === 'idle').length
+          return (
+            <div key={key} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ background: meta.color }} />
+              <div>
+                <div className="text-lg font-bold text-slate-900 leading-none">{count}</div>
+                <div className="text-[11px] text-slate-400 font-medium capitalize">{key}</div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-slate-800">Trust trend — fleet average</h3>
+            <span className="text-[10px] text-slate-400">30 days</span>
+          </div>
+          <TrustTrendChart data={AGENTS[0].history.trust} />
+        </div>
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-slate-800">Completion rate — fleet average</h3>
+            <span className="text-[10px] text-slate-400">30 days</span>
+          </div>
+          <CompletionAreaChart data={AGENTS[1].history.completion} />
+        </div>
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-slate-800">Response time — fleet average</h3>
+            <span className="text-[10px] text-slate-400">30 days</span>
+          </div>
+          <ResponseBarChart data={AGENTS[2].history.response} />
+        </div>
+      </div>
+
+      {/* Network + heatmap */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+        <div className="xl:col-span-3 bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-800">Swarm topology & peer audits</h3>
+            <Link to="/swarms" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+              Explore swarms <ArrowRight size={12} />
+            </Link>
+          </div>
+          <NetworkGraph height={420} />
+        </div>
+        <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-5">
+          <Heatmap data={AGENTS[0].heatmap} title="Fleet activity — 7 days × 24h" />
+        </div>
+      </div>
+
+      {/* Bottom row: distribution + top agents + audit feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-800 mb-2">Trust distribution</h3>
+          <TrustDistributionChart agents={AGENTS} />
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-800">Top trusted agents</h3>
+            <Link to="/marketplace" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+              Marketplace <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div className="space-y-2.5">
+            {stats.topAgents.map((a, i) => (
+              <Link
+                key={a.id}
+                to={`/agents/${a.id}`}
+                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors"
+              >
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: a.stage.color }}>
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-slate-800 truncate">{a.name}</div>
+                  <div className="text-[11px] text-slate-400">{a.role}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold tabular-nums" style={{ color: trustColor(a.trustScore) }}>
+                    {a.trustScore.toFixed(0)}
+                  </div>
+                  <div className="text-[10px] text-slate-400">trust</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-800">Live audit feed</h3>
+            <Link to="/audits" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+              Ledger <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {AUDIT_LOG.slice(0, 5).map((ev) => (
+              <div key={ev.id} className="flex gap-2.5">
+                <span
+                  className={`mt-0.5 shrink-0 w-2 h-2 rounded-full ${
+                    ev.verdict === 'pass' ? 'bg-emerald-500' : ev.verdict === 'warn' ? 'bg-amber-500' : 'bg-red-500'
+                  }`}
+                />
+                <div className="min-w-0">
+                  <div className="text-xs text-slate-700 leading-snug">
+                    <span className="font-semibold">{ev.auditor.name}</span> audited{' '}
+                    <span className="font-semibold">{ev.agent.name}</span>
+                    <span className={`ml-1 text-[10px] font-bold uppercase ${ev.verdict === 'pass' ? 'text-emerald-600' : ev.verdict === 'warn' ? 'text-amber-600' : 'text-red-500'}`}>
+                      {ev.verdict}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 truncate">{ev.note}</div>
+                  <div className="text-[10px] text-slate-300">{ev.ts}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Featured agents */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-800 inline-flex items-center gap-2">
+            <Bot size={15} className="text-brand-600" /> Featured agents
+          </h3>
+          <Link to="/marketplace" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
+            View all →
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {stats.topAgents.map((a) => (
+            <AgentCard key={a.id} agent={a} compact />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
