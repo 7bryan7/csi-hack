@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Search, SlidersHorizontal, Bot, ArrowUpDown, X, Scale } from 'lucide-react'
 import AgentCard from '../components/AgentCard'
+import CompareModal from '../components/CompareModal'
 import { LIFECYCLE_STAGES, STATUS_META, trustColor } from '../data/agents'
 import { useData } from '../DataContext'
 
@@ -19,6 +20,7 @@ export default function Marketplace() {
   const [minTrust, setMinTrust] = useState(0)
   const [sort, setSort] = useState('trust')
   const [compare, setCompare] = useState([])
+  const [compareOpen, setCompareOpen] = useState(false)
 
   const filtered = useMemo(() => {
     let list = agents.filter((a) => {
@@ -46,10 +48,15 @@ export default function Marketplace() {
       }
     })
     return list
-  }, [query, stage, status, minTrust, sort])
+  }, [query, stage, status, minTrust, sort, agents])
 
   const toggleCompare = (id) => {
     setCompare((c) => (c.includes(id) ? c.filter((x) => x !== id) : c.length >= 3 ? c : [...c, id]))
+  }
+
+  const removeFromCompare = (id) => {
+    toggleCompare(id)
+    if (compare.length - 1 < 2) setCompareOpen(false)
   }
 
   const compareAgents = compare.map((id) => agents.find((a) => a.id === id))
@@ -159,14 +166,17 @@ export default function Marketplace() {
               <span key={a.id} className="inline-flex items-center gap-1.5 bg-white border border-brand-200 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700">
                 <span className="w-2 h-2 rounded-full" style={{ background: trustColor(a.trustScore) }} />
                 {a.name}
-                <button onClick={() => toggleCompare(a.id)} className="text-slate-400 hover:text-red-500">
+                <button onClick={() => removeFromCompare(a.id)} className="text-slate-400 hover:text-red-500">
                   <X size={12} />
                 </button>
               </span>
             ))}
           </div>
           {compare.length === 3 && (
-            <button className="text-xs font-bold bg-brand-600 text-white rounded-lg px-3 py-1.5 hover:bg-brand-700 transition-colors">
+            <button
+              onClick={() => setCompareOpen(true)}
+              className="text-xs font-bold bg-brand-600 text-white rounded-lg px-3 py-1.5 hover:bg-brand-700 transition-colors"
+            >
               Compare →
             </button>
           )}
@@ -199,6 +209,15 @@ export default function Marketplace() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Compare modal — gated on compareOpen so the close button actually works */}
+      {compareOpen && (
+        <CompareModal
+          agents={compareAgents}
+          onClose={() => setCompareOpen(false)}
+          onRemove={removeFromCompare}
+        />
       )}
     </div>
   )

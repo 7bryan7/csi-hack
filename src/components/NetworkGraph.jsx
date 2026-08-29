@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force'
+import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide, forceX, forceY } from 'd3-force'
 import { trustColor, STATUS_META } from '../data/agents'
 import { useData } from '../DataContext'
 import { useNavigate } from 'react-router-dom'
@@ -18,48 +18,77 @@ export default function NetworkGraph({ height = 460 }) {
   useEffect(() => {
     const svg = svgRef.current
     if (!svg || agents.length === 0) return
-    const width = svg.clientWidth
-    const h = height
 
-    const nodes = agents.map((a) => ({ id: a.id, agent: a, x: width / 2, y: h / 2 }))
-    const links = []
-    agents.forEach((a) => {
-      a.peers.forEach((pid) => {
-        links.push({ source: a.id, target: pid })
+    let sim = null
+
+    const layout = () => {
+      // getBoundingClientRect is reliable for SVG; clientWidth can be 0.
+      const width = svg.getBoundingClientRect().width
+      if (width <= 0) return // container not laid out yet — ResizeObserver will retry
+      const h = height
+
+      const nodes = agents.map((a) => ({
+        id: a.id,
+        agent: a,
+        // Random start positions — starting every node at the center makes the
+        // first many-body tick explode the layout far outside the viewport.
+        x: Math.random() * width,
+        y: Math.random() * h,
+      }))
+      const links = []
+      agents.forEach((a) => {
+        a.peers.forEach((pid) => {
+          links.push({ source: a.id, target: pid })
+        })
       })
-    })
 
-    const sim = forceSimulation(nodes)
-      .force('link', forceLink(links).id((d) => d.id).distance(70).strength(0.5))
-      .force('charge', forceManyBody().strength(-260))
-      .force('center', forceCenter(width / 2, h / 2))
-      .force('collide', forceCollide(26))
-      .stop()
+      if (sim) sim.stop()
+      sim = forceSimulation(nodes)
+        .force('link', forceLink(links).id((d) => d.id).distance(70).strength(0.5))
+        .force('charge', forceManyBody().strength(-260))
+        .force('center', forceCenter(width / 2, h / 2))
+        // Weak centering keeps the cluster inside the viewport after ticks.
+        .force('x', forceX(width / 2).strength(0.1))
+        .force('y', forceY(h / 2).strength(0.1))
+        .force('collide', forceCollide(26))
+        .stop()
 
-    // Run a fixed number of ticks for a stable layout
-    for (let i = 0; i < 220; i++) sim.tick()
+      // Run a fixed number of ticks for a stable layout
+      for (let i = 0; i < 220; i++) sim.tick()
 
-    const g = svg.querySelector('g.network')
-    if (!g) return
+      const g = svg.querySelector('g.network')
+      if (!g) return
 
-    // Edges
-    const edgeSel = g.querySelectorAll('line.edge')
-    edgeSel.forEach((el, i) => {
-      const l = links[i]
-      el.setAttribute('x1', l.source.x)
-      el.setAttribute('y1', l.source.y)
-      el.setAttribute('x2', l.target.x)
-      el.setAttribute('y2', l.target.y)
-    })
+      // Edges
+      const edgeSel = g.querySelectorAll('line.edge')
+      edgeSel.forEach((el, i) => {
+        const l = links[i]
+        el.setAttribute('x1', l.source.x)
+        el.setAttribute('y1', l.source.y)
+        el.setAttribute('x2', l.target.x)
+        el.setAttribute('y2', l.target.y)
+      })
 
-    // Nodes
-    const nodeSel = g.querySelectorAll('g.node')
-    nodeSel.forEach((el, i) => {
-      const n = nodes[i]
-      el.setAttribute('transform', `translate(${n.x},${n.y})`)
-    })
+      // Nodes
+      const nodeSel = g.querySelectorAll('g.node')
+      nodeSel.forEach((el, i) => {
+        const n = nodes[i]
+        el.setAttribute('transform', `translate(${n.x},${n.y})`)
+      })
+    }
 
-    return () => sim.stop()
+    layout()
+
+    // Re-layout when the container gains width or resizes (e.g. narrow panels,
+    // sidebar collapse, window resize) — the old code measured once at mount
+    // and stayed broken forever if the width was 0 at that moment.
+    const ro = new ResizeObserver(() => layout())
+    ro.observe(svg)
+
+    return () => {
+      ro.disconnect()
+      if (sim) sim.stop()
+    }
   }, [height, agents])
 
   const nodeRadius = (a) => 10 + (a.trustScore / 100) * 14

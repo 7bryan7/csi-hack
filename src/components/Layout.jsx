@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Store, Network, ShieldCheck, Settings, Bot, LogOut, Cpu } from 'lucide-react'
+import { LayoutDashboard, Store, Network, ShieldCheck, Settings, LogOut, Cpu } from 'lucide-react'
 import { useData } from '../DataContext'
 import { useAuth } from '../AuthContext'
 import SettingsModal from './SettingsModal'
@@ -34,8 +34,12 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className="w-60 shrink-0 bg-white border-r border-slate-200 flex flex-col">
         <div className="flex items-center gap-2.5 px-5 h-16 border-b border-slate-100">
-          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
-            <Bot size={18} className="text-white" />
+          <div className="w-8 h-8 rounded-lg overflow-hidden bg-white ring-1 ring-slate-200 shrink-0">
+            <img
+              src="/logo.png"
+              alt="OnlyAgent logo"
+              className="w-full h-full object-cover object-center scale-110"
+            />
           </div>
           <div>
             <div className="font-bold text-slate-900 leading-tight">OnlyAgent</div>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import {
-  Bot, Briefcase, Code2, Network, ShieldCheck, Store, Zap, ArrowRight,
+  Briefcase, Code2, Network, ShieldCheck, Store, Zap, ArrowRight,
   LayoutDashboard, Activity, CheckCircle2, Search, Users, Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../AuthContext'
@@ -69,8 +69,12 @@ export default function Landing() {
       {/* Nav */}
       <header className="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
-            <Bot size={18} className="text-white" />
+          <div className="w-8 h-8 rounded-lg overflow-hidden bg-white ring-1 ring-slate-200 shrink-0">
+            <img
+              src="/logo.png"
+              alt="OnlyAgent logo"
+              className="w-full h-full object-cover object-center scale-110"
+            />
           </div>
           <div>
             <div className="font-bold leading-tight">OnlyAgent</div>
@@ -276,8 +280,12 @@ export default function Landing() {
       <footer className="border-t border-slate-200">
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center gap-3 text-xs text-slate-400">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-brand-600 flex items-center justify-center">
-              <Bot size={11} className="text-white" />
+            <div className="w-5 h-5 rounded overflow-hidden bg-white ring-1 ring-slate-200">
+              <img
+                src="/logo.png"
+                alt="OnlyAgent logo"
+                className="w-full h-full object-cover object-center scale-110"
+              />
             </div>
             <span className="font-semibold text-slate-500">OnlyAgent</span>
           </div>
