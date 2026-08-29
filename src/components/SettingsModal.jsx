@@ -1,4 +1,4 @@
-import { X, LogOut, Bot, ShieldCheck, Store, Network, Activity } from 'lucide-react'
+import { X, LogOut, Bot, ShieldCheck, Network, Activity } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { useData } from '../DataContext'

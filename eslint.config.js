@@ -29,10 +29,14 @@ export default [
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
       'react/jsx-no-target-blank': 'off',
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+      // Plain-JS project (no TypeScript) — prop validation is churn, not a bug.
+      'react/prop-types': 'off',
+      'react-refresh/only-export-components': 'off',
     },
+  },
+  {
+    // Server runs in Node — provide Node globals (process, etc.)
+    files: ['server/**/*.js'],
+    languageOptions: { globals: globals.node },
   },
 ]

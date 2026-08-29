@@ -38,6 +38,16 @@ body {
   box-shadow: 0 8px 24px rgba(30, 41, 59, 0.08);
 }
 
+/* Glass card hover lift (used on the image-background landing page) */
+.card-lift-glass {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.card-lift-glass:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
 /* Pulse dot for live status */
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
@@ -46,4 +56,159 @@ body {
 }
 .pulse-dot {
   animation: pulse-ring 2s infinite;
+}
+
+/* ── Awwwards-style CTA button (GET STARTED) ─────────────────────── */
+/* Animations are OFF by default and only activate when the cursor is
+   within the 250px reveal range (see .btn-active below). */
+@keyframes btn-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes btn-shine {
+  0%, 55% { transform: translateX(-140%) skewX(-20deg); }
+  100% { transform: translateX(340%) skewX(-20deg); }
+}
+.btn-awwwards {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, #2d4fe0, #7c3aed, #0d9488, #2d4fe0);
+  background-size: 300% 300%;
+  transition: transform 0.2s ease;
+}
+.btn-awwwards:hover {
+  transform: scale(1.04);
+}
+.btn-awwwards::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+/* Cursor within 250px of the button → animations play */
+.btn-awwwards.btn-active {
+  animation: btn-gradient 8s ease infinite;
+}
+.btn-awwwards.btn-active::before {
+  opacity: 1;
+  animation: btn-shine 4.5s ease-in-out infinite;
+}
+
+/* ── Cursor spotlight reveal (landing page) ──────────────────────── */
+.reveal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(
+    circle 250px at var(--mx, -200px) var(--my, -200px),
+    black 0%,
+    black 40%,
+    rgba(0, 0, 0, 0.75) 68%,
+    rgba(0, 0, 0, 0.4) 84%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    circle 250px at var(--mx, -200px) var(--my, -200px),
+    black 0%,
+    black 40%,
+    rgba(0, 0, 0, 0.75) 68%,
+    rgba(0, 0, 0, 0.4) 84%,
+    transparent 100%
+  );
+}
+.reveal-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.1); /* matches the blurred layer's scale-110 */
+}
+
+/* ── Targeting-reticle cursor (landing page) ────────────────────── */
+.reticle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  z-index: 60;
+  pointer-events: none;
+  will-change: transform;
+}
+.reticle-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform 0.3s ease;
+}
+.reticle.is-hover .reticle-inner {
+  transform: scale(1.4);
+}
+.reticle-ring {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.25), inset 0 0 8px rgba(255, 255, 255, 0.15);
+  transition: border-color 0.3s ease;
+}
+.reticle.is-hover .reticle-ring {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.reticle-ring-dashed {
+  position: absolute;
+  top: -28px;
+  left: -28px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  animation: reticle-spin 14s linear infinite;
+}
+.reticle-dot {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  transition: transform 0.3s ease;
+}
+.reticle.is-hover .reticle-dot {
+  transform: scale(0.55);
+}
+.reticle-tick {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.9);
+  width: 2px;
+  height: 7px;
+  border-radius: 1px;
+}
+.reticle-tick-n { top: -27px; left: -1px; }
+.reticle-tick-s { bottom: -27px; left: -1px; }
+.reticle-tick-e { right: -27px; top: -1px; width: 7px; height: 2px; }
+.reticle-tick-w { left: -27px; top: -1px; width: 7px; height: 2px; }
+@keyframes reticle-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── "How it works" step arrows ───────────────────────────────────── */
+/* Diagonal dashed connector (SVG line) with a slow, smooth marching
+   flow toward the next step. */
+.step-arrow-line-svg {
+  animation: step-dash-march 3s linear infinite;
+}
+@keyframes step-dash-march {
+  to { stroke-dashoffset: -12; }
 }

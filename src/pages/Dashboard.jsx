@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ShieldCheck, CheckCircle2, Timer, RefreshCw, Bot, ArrowRight, Activity,
+  ShieldCheck, CheckCircle2, Timer, RefreshCw, Bot, ArrowRight,
 } from 'lucide-react'
 import KpiCard from '../components/KpiCard'
 import AgentCard from '../components/AgentCard'
@@ -14,7 +14,7 @@ import { useData } from '../DataContext'
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState('7d')
-  const { agents, audits, mode } = useData()
+  const { agents, audits } = useData()
 
   const stats = useMemo(() => {
     if (agents.length === 0) return null

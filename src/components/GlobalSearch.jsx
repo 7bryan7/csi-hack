@@ -52,8 +52,6 @@ export default function GlobalSearch() {
 
   const onKeyDown = (e) => {
     if (e.key === 'Enter' && total > 0) {
-      const first =
-        results.agents[0] || results.swarms[0] || results.audits[0]
       if (results.agents[0]) go(`/app/agents/${results.agents[0].id}`)
       else if (results.swarms[0]) go('/app/swarms')
       else go('/app/audits')

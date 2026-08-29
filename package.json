@@ -14,16 +14,12 @@
   "dependencies": {
     "cors": "^2.8.6",
     "d3-force": "^3.0.0",
-    "d3-scale": "^4.0.2",
-    "d3-scale-chromatic": "^3.1.0",
-    "d3-selection": "^2.0.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "lucide-react": "^1.35.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
-    "react-simple-maps": "^3.0.0",
     "recharts": "^3.10.1"
   },
   "devDependencies": {

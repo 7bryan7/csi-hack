@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Network, Activity, Zap, ArrowRight, Bot } from 'lucide-react'
+import { Network, Activity, Zap, Bot } from 'lucide-react'
 import NetworkGraph from '../components/NetworkGraph'
 import { trustColor, STATUS_META } from '../data/agents'
 import { useData } from '../DataContext'
@@ -141,7 +141,7 @@ export default function Swarms() {
             Dynamic re-ranking in action
           </div>
           <p className="text-sm text-brand-100 leading-relaxed">
-            When a member's trust drops below threshold (e.g. repeated failed audits), the orchestrator
+            When a member&apos;s trust drops below threshold (e.g. repeated failed audits), the orchestrator
             automatically re-ranks the swarm and routes tasks to the next-best agent — no hardcoded routing.
           </p>
         </div>

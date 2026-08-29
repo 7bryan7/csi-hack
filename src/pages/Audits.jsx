@@ -28,7 +28,7 @@ export default function Audits() {
       }
       return true
     })
-  }, [verdict, query])
+  }, [verdict, query, audits])
 
   const counts = {
     pass: audits.filter((e) => e.verdict === 'pass').length,

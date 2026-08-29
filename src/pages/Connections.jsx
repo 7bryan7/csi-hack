@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
-  Cpu, KeyRound, Plug, PlugZap, Bot, Network, ShieldCheck, Zap,
-  SlidersHorizontal, Bell, Rocket, CheckCircle2, Eye, EyeOff, Info,
+  KeyRound, Plug, PlugZap,
+  SlidersHorizontal, Rocket, CheckCircle2, Eye, EyeOff, Info,
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------

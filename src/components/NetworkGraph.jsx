@@ -98,7 +98,6 @@ export default function NetworkGraph({ height = 460 }) {
       <svg ref={svgRef} width="100%" height={height} className="block">
         <g className="network">
           {agents.flatMap((a) => a.peers.map((pid) => ({ a, pid }))).map(({ a, pid }, i) => {
-            const target = agents.find((x) => x.id === pid)
             const isHot = selected && (selected.id === a.id || selected.id === pid)
             return (
               <line
