@@ -30,24 +30,12 @@ function mulberry32(seed) {
 }
 
 const AGENT_DEFS = [
-  { name: 'Product Scout', role: 'Product Manager', stage: 'discovery', description: 'Scans market signals, user feedback and competitor moves to surface product opportunities.', tags: ['market-research', 'roadmap', 'prioritization'], price: 0.42 },
-  { name: 'Requirement Miner', role: 'Business Analyst', stage: 'discovery', description: 'Extracts structured requirements from stakeholder conversations and raw briefs.', tags: ['requirements', 'spec-writing', 'stakeholder'], price: 0.38 },
-  { name: 'UX Researcher', role: 'UX Researcher', stage: 'discovery', description: 'Designs and runs user studies, synthesizes interviews into actionable insights.', tags: ['user-research', 'interviews', 'insights'], price: 0.55 },
-  { name: 'Wireframe Artist', role: 'Product Designer', stage: 'design', description: 'Produces low-fidelity wireframes and user flows from validated requirements.', tags: ['wireframes', 'user-flows', 'prototyping'], price: 0.61 },
-  { name: 'UI Systems Builder', role: 'UI Designer', stage: 'design', description: 'Maintains the design system, tokens and component specs across the product.', tags: ['design-system', 'tokens', 'components'], price: 0.74 },
-  { name: 'Design Critic', role: 'Design Reviewer', stage: 'design', description: 'Peer-audits design output for consistency, accessibility and brand compliance.', tags: ['audit', 'a11y', 'brand'], price: 0.29 },
-  { name: 'Frontend Engineer', role: 'Frontend Dev', stage: 'development', description: 'Implements UI features with typed components, tests and performance budgets.', tags: ['react', 'typescript', 'css'], price: 1.20 },
-  { name: 'Backend Engineer', role: 'Backend Dev', stage: 'development', description: 'Builds APIs, data models and business logic with contract-first design.', tags: ['api', 'databases', 'services'], price: 1.35 },
-  { name: 'API Integration Specialist', role: 'Integration Dev', stage: 'development', description: 'Wires third-party services and internal systems into reliable integrations.', tags: ['integrations', 'webhooks', 'oauth'], price: 0.98 },
-  { name: 'Code Reviewer', role: 'Engineering Reviewer', stage: 'development', description: 'Peer-reviews pull requests for correctness, security and maintainability.', tags: ['code-review', 'security', 'best-practices'], price: 0.45 },
-  { name: 'QA Tester', role: 'QA Engineer', stage: 'qa', description: 'Designs test plans, runs regression suites and files reproducible bug reports.', tags: ['test-plans', 'regression', 'bug-reports'], price: 0.52 },
-  { name: 'Security Auditor', role: 'Security Engineer', stage: 'qa', description: 'Scans for vulnerabilities, reviews threat models and enforces policy gates.', tags: ['pentest', 'threat-model', 'compliance'], price: 0.88 },
-  { name: 'Performance Optimizer', role: 'Performance Engineer', stage: 'qa', description: 'Profiles bottlenecks and applies targeted optimizations to latency and memory.', tags: ['profiling', 'latency', 'optimization'], price: 0.79 },
-  { name: 'Release Orchestrator', role: 'DevOps Engineer', stage: 'deployment', description: 'Coordinates build, staging and production rollouts with rollback safety.', tags: ['ci-cd', 'rollouts', 'rollback'], price: 0.66 },
-  { name: 'Infra Provisioner', role: 'Platform Engineer', stage: 'deployment', description: 'Provisions and tunes cloud infrastructure, autoscaling and cost controls.', tags: ['terraform', 'kubernetes', 'cloud'], price: 0.93 },
-  { name: 'Docs Scribe', role: 'Technical Writer', stage: 'operations', description: 'Keeps API docs, runbooks and changelogs accurate and searchable.', tags: ['documentation', 'runbooks', 'changelog'], price: 0.31 },
-  { name: 'Support Triage', role: 'Support Engineer', stage: 'operations', description: 'Classifies incoming issues, drafts responses and escalates with context.', tags: ['triage', 'support', 'escalation'], price: 0.27 },
-  { name: 'Analytics Reporter', role: 'Data Analyst', stage: 'operations', description: 'Turns product telemetry into dashboards, funnels and decision-ready reports.', tags: ['analytics', 'dashboards', 'funnels'], price: 0.58 },
+  { name: 'Maya Chen', role: 'Content Writer', gender: 'f', stage: 'operations', specialty: 'Content Writer', description: 'Writes crisp, on-brand copy — product pages, launch posts and long-form stories that actually convert.', tags: ['copywriting', 'storytelling', 'brand-voice'], price: 0.45 },
+  { name: 'Marcus Webb', role: 'Researcher', gender: 'm', stage: 'discovery', specialty: 'Researcher', description: 'Turns messy signals — interviews, transcripts, competitor pages — into structured, decision-ready insights.', tags: ['market-research', 'synthesis', 'competitive-analysis'], price: 0.52 },
+  { name: 'Leo Tanaka', role: 'Coder', gender: 'm', stage: 'development', specialty: 'Coder', description: 'Ships clean, typed, test-covered code — from debounced inputs to API contracts — with performance budgets.', tags: ['typescript', 'react', 'api-design'], price: 1.20 },
+  { name: 'Daniel Okafor', role: 'Designer', gender: 'm', stage: 'design', specialty: 'Designer', description: 'Crafts interfaces and design systems that are consistent, accessible and a little bit delightful.', tags: ['ui-design', 'design-systems', 'prototyping'], price: 0.68 },
+  { name: 'Priya Sharma', role: 'Data Analyst', gender: 'f', stage: 'qa', specialty: 'Data Analyst', description: 'Turns telemetry and logs into dashboards, funnels and reports that make the next decision obvious.', tags: ['analytics', 'sql', 'reporting'], price: 0.58 },
+  { name: 'Sofia Reyes', role: 'Community Manager', gender: 'f', stage: 'operations', specialty: 'Community Manager', description: 'Keeps conversations alive, on-topic and kind — turning a feed into a community people want to come back to.', tags: ['community', 'engagement', 'moderation'], price: 0.35 },
 ]
 
 // 30-day history generator
@@ -88,8 +76,16 @@ export const AGENTS = AGENT_DEFS.map((def, i) => {
   const statusRoll = rng()
   const status = statusRoll > 0.92 ? 'stalled' : statusRoll > 0.8 ? 'degraded' : statusRoll > 0.68 ? 'idle' : 'active'
 
+  // Composite reputation (mirrors server formula; social = 0 until the feed)
+  const latencyHealth = Math.round(Math.min(98, Math.max(10, 100 - respTime / 30)) * 10) / 10
+  const W = { trust: 0.4, completion: 0.2, latency: 0.2, social: 0.2 }
+  const pillars = { trust, completion, latency: latencyHealth, social: 0 }
+  const reputationScore = Math.round(
+    Math.min(100, Math.max(0, pillars.trust * W.trust + pillars.completion * W.completion + pillars.latency * W.latency)) * 10
+  ) / 10
+
   return {
-    id: `ag-${String(i + 1).padStart(3, '0')}`,
+    id: `ag-${String(101 + i)}`,
     ...def,
     stage: LIFECYCLE_STAGES.find((s) => s.id === def.stage),
     trustScore: trust,
@@ -102,6 +98,11 @@ export const AGENTS = AGENT_DEFS.map((def, i) => {
     status,
     pricePerTask: def.price,
     p95Latency: Math.round(respTime * (1.6 + rng() * 1.2)),
+    reputationScore,
+    pillars,
+    socialScore: 0,
+    latencyHealth,
+    hireable: reputationScore >= 70,
     history: {
       trust: genHistory(rng, trust, 6),
       completion: genHistory(rng, completion, 8),
@@ -114,16 +115,11 @@ export const AGENTS = AGENT_DEFS.map((def, i) => {
 
 // Peer audit edges — who audits whom (directed)
 const PEER_EDGES = [
-  ['ag-001', 'ag-002'], ['ag-002', 'ag-003'], ['ag-003', 'ag-004'],
-  ['ag-004', 'ag-005'], ['ag-005', 'ag-006'], ['ag-006', 'ag-004'],
-  ['ag-007', 'ag-008'], ['ag-008', 'ag-009'], ['ag-009', 'ag-010'],
-  ['ag-010', 'ag-007'], ['ag-008', 'ag-010'], ['ag-007', 'ag-009'],
-  ['ag-011', 'ag-012'], ['ag-012', 'ag-013'], ['ag-013', 'ag-011'],
-  ['ag-014', 'ag-015'], ['ag-015', 'ag-014'],
-  ['ag-016', 'ag-017'], ['ag-017', 'ag-018'], ['ag-018', 'ag-016'],
-  ['ag-003', 'ag-004'], ['ag-005', 'ag-007'], ['ag-006', 'ag-011'],
-  ['ag-010', 'ag-012'], ['ag-013', 'ag-014'], ['ag-015', 'ag-016'],
-  ['ag-002', 'ag-018'], ['ag-009', 'ag-011'],
+  ['ag-101', 'ag-106'], ['ag-106', 'ag-101'],
+  ['ag-102', 'ag-105'], ['ag-105', 'ag-102'],
+  ['ag-103', 'ag-104'], ['ag-104', 'ag-103'],
+  ['ag-101', 'ag-102'], ['ag-105', 'ag-103'],
+  ['ag-106', 'ag-104'], ['ag-102', 'ag-101'],
 ]
 
 PEER_EDGES.forEach(([from, to]) => {
@@ -134,14 +130,14 @@ PEER_EDGES.forEach(([from, to]) => {
 
 // Recent audit events (fake feed)
 const AUDIT_EVENTS = [
-  { id: 'ev-01', agentId: 'ag-007', auditorId: 'ag-010', verdict: 'pass', note: 'PR #482: clean diff, tests green, no security regressions.', ts: '2m ago' },
-  { id: 'ev-02', agentId: 'ag-012', auditorId: 'ag-011', verdict: 'warn', note: 'Threat model gap: rate limiting missing on /v2/export.', ts: '11m ago' },
-  { id: 'ev-03', agentId: 'ag-004', auditorId: 'ag-006', verdict: 'pass', note: 'Wireframes match spec; a11y contrast verified on all states.', ts: '24m ago' },
-  { id: 'ev-04', agentId: 'ag-015', auditorId: 'ag-014', verdict: 'fail', note: 'Terraform plan drifted: prod bucket policy reverted to public.', ts: '38m ago' },
-  { id: 'ev-05', agentId: 'ag-003', auditorId: 'ag-002', verdict: 'pass', note: 'Interview synthesis consistent across 12 sessions.', ts: '52m ago' },
-  { id: 'ev-06', agentId: 'ag-009', auditorId: 'ag-008', verdict: 'warn', note: 'OAuth refresh flow untested for token rotation edge case.', ts: '1h ago' },
-  { id: 'ev-07', agentId: 'ag-011', auditorId: 'ag-013', verdict: 'pass', note: 'Regression suite 100% green on staging.', ts: '1h ago' },
-  { id: 'ev-08', agentId: 'ag-017', auditorId: 'ag-016', verdict: 'pass', note: 'Triage accuracy 94% this shift; escalations well-contextualized.', ts: '2h ago' },
+  { id: 'ev-01', agentId: 'ag-103', auditorId: 'ag-104', verdict: 'pass', note: 'PR #482: clean diff, types green, no regressions.', ts: '2m ago' },
+  { id: 'ev-02', agentId: 'ag-105', auditorId: 'ag-102', verdict: 'warn', note: 'Outlier flagged but not explained — add a footnote on the funnel drop.', ts: '11m ago' },
+  { id: 'ev-03', agentId: 'ag-104', auditorId: 'ag-106', verdict: 'pass', note: 'Empty states handled; contrast verified on all variants.', ts: '24m ago' },
+  { id: 'ev-04', agentId: 'ag-101', auditorId: 'ag-102', verdict: 'pass', note: 'Launch post on-brand; hook is strong, CTA is clear.', ts: '38m ago' },
+  { id: 'ev-05', agentId: 'ag-102', auditorId: 'ag-105', verdict: 'pass', note: 'Synthesis consistent across 12 interview transcripts.', ts: '52m ago' },
+  { id: 'ev-06', agentId: 'ag-106', auditorId: 'ag-101', verdict: 'warn', note: 'Thread went off-topic twice — tighten the moderation prompts.', ts: '1h ago' },
+  { id: 'ev-07', agentId: 'ag-103', auditorId: 'ag-105', verdict: 'pass', note: 'API contract matches the spec; edge cases covered.', ts: '1h ago' },
+  { id: 'ev-08', agentId: 'ag-104', auditorId: 'ag-103', verdict: 'pass', note: 'Design tokens exported cleanly; a11y audit green.', ts: '2h ago' },
 ]
 
 export const AUDIT_LOG = AUDIT_EVENTS.map((e) => ({
@@ -154,27 +150,27 @@ export const AUDIT_LOG = AUDIT_EVENTS.map((e) => ({
 export const SWARMS = [
   {
     id: 'sw-01',
-    name: 'Feature Factory',
-    description: 'End-to-end feature delivery swarm: discovery → design → dev → QA → release.',
-    agents: ['ag-001', 'ag-002', 'ag-003', 'ag-004', 'ag-007', 'ag-008', 'ag-011', 'ag-014'],
-    health: 92,
-    throughput: 14,
+    name: 'Content Studio',
+    description: 'Content, community and design swarm: writing → visuals → engagement.',
+    agents: ['ag-101', 'ag-106', 'ag-104'],
+    health: 88,
+    throughput: 11,
   },
   {
     id: 'sw-02',
-    name: 'Security Response',
-    description: 'Continuous security auditing and incident triage swarm.',
-    agents: ['ag-012', 'ag-013', 'ag-017'],
-    health: 78,
-    throughput: 6,
+    name: 'Research & Insights',
+    description: 'Research and data swarm: evidence gathering → analysis → reporting.',
+    agents: ['ag-102', 'ag-105'],
+    health: 82,
+    throughput: 7,
   },
   {
     id: 'sw-03',
-    name: 'Platform Reliability',
-    description: 'Infrastructure, performance and operations monitoring swarm.',
-    agents: ['ag-015', 'ag-014', 'ag-013', 'ag-018'],
-    health: 85,
-    throughput: 9,
+    name: 'Build & Ship',
+    description: 'Build swarm: design → code → QA, end to end.',
+    agents: ['ag-103', 'ag-104', 'ag-105'],
+    health: 90,
+    throughput: 13,
   },
 ]
 

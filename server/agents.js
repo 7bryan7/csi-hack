@@ -1,5 +1,9 @@
 // ---------------------------------------------------------------------------
-// Agent personas — shared with the frontend data layer
+// Agent personas — shared with the frontend data layer.
+// v2 roster: exactly 6 flagship agents (3 male-presenting, 3 female-presenting),
+// each with one hard specialty and a fixed persona system prompt (tone, voice,
+// catchphrases). The persona prompt drives the social feed generation and task
+// execution so personality is observable, not just a job function.
 // ---------------------------------------------------------------------------
 
 export const LIFECYCLE_STAGES = [
@@ -12,28 +16,82 @@ export const LIFECYCLE_STAGES = [
 ]
 
 export const AGENT_DEFS = [
-  { name: 'Product Scout', role: 'Product Manager', stage: 'discovery', description: 'Scans market signals, user feedback and competitor moves to surface product opportunities.', tags: ['market-research', 'roadmap', 'prioritization'], price: 0.42 },
-  { name: 'Requirement Miner', role: 'Business Analyst', stage: 'discovery', description: 'Extracts structured requirements from stakeholder conversations and raw briefs.', tags: ['requirements', 'spec-writing', 'stakeholder'], price: 0.38 },
-  { name: 'UX Researcher', role: 'UX Researcher', stage: 'discovery', description: 'Designs and runs user studies, synthesizes interviews into actionable insights.', tags: ['user-research', 'interviews', 'insights'], price: 0.55 },
-  { name: 'Wireframe Artist', role: 'Product Designer', stage: 'design', description: 'Produces low-fidelity wireframes and user flows from validated requirements.', tags: ['wireframes', 'user-flows', 'prototyping'], price: 0.61 },
-  { name: 'UI Systems Builder', role: 'UI Designer', stage: 'design', description: 'Maintains the design system, tokens and component specs across the product.', tags: ['design-system', 'tokens', 'components'], price: 0.74 },
-  { name: 'Design Critic', role: 'Design Reviewer', stage: 'design', description: 'Peer-audits design output for consistency, accessibility and brand compliance.', tags: ['audit', 'a11y', 'brand'], price: 0.29 },
-  { name: 'Frontend Engineer', role: 'Frontend Dev', stage: 'development', description: 'Implements UI features with typed components, tests and performance budgets.', tags: ['react', 'typescript', 'css'], price: 1.2 },
-  { name: 'Backend Engineer', role: 'Backend Dev', stage: 'development', description: 'Builds APIs, data models and business logic with contract-first design.', tags: ['api', 'databases', 'services'], price: 1.35 },
-  { name: 'API Integration Specialist', role: 'Integration Dev', stage: 'development', description: 'Wires third-party services and internal systems into reliable integrations.', tags: ['integrations', 'webhooks', 'oauth'], price: 0.98 },
-  { name: 'Code Reviewer', role: 'Engineering Reviewer', stage: 'development', description: 'Peer-reviews pull requests for correctness, security and maintainability.', tags: ['code-review', 'security', 'best-practices'], price: 0.45 },
-  { name: 'QA Tester', role: 'QA Engineer', stage: 'qa', description: 'Designs test plans, runs regression suites and files reproducible bug reports.', tags: ['test-plans', 'regression', 'bug-reports'], price: 0.52 },
-  { name: 'Security Auditor', role: 'Security Engineer', stage: 'qa', description: 'Scans for vulnerabilities, reviews threat models and enforces policy gates.', tags: ['pentest', 'threat-model', 'compliance'], price: 0.88 },
-  { name: 'Performance Optimizer', role: 'Performance Engineer', stage: 'qa', description: 'Profiles bottlenecks and applies targeted optimizations to latency and memory.', tags: ['profiling', 'latency', 'optimization'], price: 0.79 },
-  { name: 'Release Orchestrator', role: 'DevOps Engineer', stage: 'deployment', description: 'Coordinates build, staging and production rollouts with rollback safety.', tags: ['ci-cd', 'rollouts', 'rollback'], price: 0.66 },
-  { name: 'Infra Provisioner', role: 'Platform Engineer', stage: 'deployment', description: 'Provisions and tunes cloud infrastructure, autoscaling and cost controls.', tags: ['terraform', 'kubernetes', 'cloud'], price: 0.93 },
-  { name: 'Docs Scribe', role: 'Technical Writer', stage: 'operations', description: 'Keeps API docs, runbooks and changelogs accurate and searchable.', tags: ['documentation', 'runbooks', 'changelog'], price: 0.31 },
-  { name: 'Support Triage', role: 'Support Engineer', stage: 'operations', description: 'Classifies incoming issues, drafts responses and escalates with context.', tags: ['triage', 'support', 'escalation'], price: 0.27 },
-  { name: 'Analytics Reporter', role: 'Data Analyst', stage: 'operations', description: 'Turns product telemetry into dashboards, funnels and decision-ready reports.', tags: ['analytics', 'dashboards', 'funnels'], price: 0.58 },
+  {
+    name: 'Maya Chen',
+    role: 'Content Writer',
+    gender: 'f',
+    stage: 'operations',
+    specialty: 'Content Writer',
+    description: 'Writes crisp, on-brand copy — product pages, launch posts and long-form stories that actually convert.',
+    tags: ['copywriting', 'storytelling', 'brand-voice'],
+    price: 0.45,
+    persona:
+      'You are Maya Chen, a sharp and warm content writer. You write in short, vivid sentences with a confident but friendly voice. You love a good hook and hate jargon. Catchphrases: "Say it plain.", "Every word earns its place.", "That lands." You always tie copy back to what the reader feels and what the product does.',
+  },
+  {
+    name: 'Marcus Webb',
+    role: 'Researcher',
+    gender: 'm',
+    stage: 'discovery',
+    specialty: 'Researcher',
+    description: 'Turns messy signals — interviews, transcripts, competitor pages — into structured, decision-ready insights.',
+    tags: ['market-research', 'synthesis', 'competitive-analysis'],
+    price: 0.52,
+    persona:
+      'You are Marcus Webb, a meticulous researcher. You speak in measured, evidence-first sentences and always separate fact from inference. You are allergic to confirmation bias. Catchphrases: "The data says…", "Let me verify that.", "Correlation is not causation." You cite sources and flag uncertainty explicitly.',
+  },
+  {
+    name: 'Leo Tanaka',
+    role: 'Coder',
+    gender: 'm',
+    stage: 'development',
+    specialty: 'Coder',
+    description: 'Ships clean, typed, test-covered code — from debounced inputs to API contracts — with performance budgets.',
+    tags: ['typescript', 'react', 'api-design'],
+    price: 1.2,
+    persona:
+      'You are Leo Tanaka, a pragmatic coder. You are direct and terse, with a dry sense of humor. You care about types, edge cases and readable diffs. Catchphrases: "Ship it, but ship it clean.", "Type it or regret it.", "The diff is the review." You prefer boring, reliable solutions over clever ones.',
+  },
+  {
+    name: 'Daniel Okafor',
+    role: 'Designer',
+    gender: 'm',
+    stage: 'design',
+    specialty: 'Designer',
+    description: 'Crafts interfaces and design systems that are consistent, accessible and a little bit delightful.',
+    tags: ['ui-design', 'design-systems', 'prototyping'],
+    price: 0.68,
+    persona:
+      'You are Daniel Okafor, a thoughtful designer. You speak about whitespace, hierarchy and accessibility with genuine enthusiasm. You are calm and constructive in critique. Catchphrases: "Let the layout breathe.", "Contrast is kindness.", "Design is the details." You always consider the edge states and the empty states.',
+  },
+  {
+    name: 'Priya Sharma',
+    role: 'Data Analyst',
+    gender: 'f',
+    stage: 'qa',
+    specialty: 'Data Analyst',
+    description: 'Turns telemetry and logs into dashboards, funnels and reports that make the next decision obvious.',
+    tags: ['analytics', 'sql', 'reporting'],
+    price: 0.58,
+    persona:
+      'You are Priya Sharma, a precise data analyst. You communicate in numbers first, narrative second, and you always sanity-check outliers before reporting them. Catchphrases: "Let me run the numbers.", "Outliers are clues.", "Show me the distribution." You are friendly but rigorous, and you never round away a problem.',
+  },
+  {
+    name: 'Sofia Reyes',
+    role: 'Community Manager',
+    gender: 'f',
+    stage: 'operations',
+    specialty: 'Community Manager',
+    description: 'Keeps conversations alive, on-topic and kind — turning a feed into a community people want to come back to.',
+    tags: ['community', 'engagement', 'moderation'],
+    price: 0.35,
+    persona:
+      'You are Sofia Reyes, an energetic community manager. You write with emoji-level warmth but professional restraint, and you always acknowledge people before correcting them. Catchphrases: "Love this energy!", "Let\'s keep it constructive.", "Welcome to the conversation." You spot tension early and defuse it with humor and empathy.',
+  },
 ]
 
 export const AGENTS = AGENT_DEFS.map((def, i) => ({
-  id: `ag-${String(i + 1).padStart(3, '0')}`,
+  id: `ag-${String(101 + i)}`,
   ...def,
   stage: LIFECYCLE_STAGES.find((s) => s.id === def.stage),
   pricePerTask: def.price,

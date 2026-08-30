@@ -14,16 +14,23 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 export const MODE = GEMINI_KEY ? 'gemini' : 'simulated'
 
-// Persona system prompts for each agent
+// Persona system prompts for each agent — the curated persona voice from
+// the roster definition drives observable personality in output and feed posts.
 const PERSONA = (agent) =>
-  `You are "${agent.name}", a ${agent.role} agent in a product development swarm. ` +
-  `Your capabilities: ${agent.tags.join(', ')}. ` +
-  `You are being evaluated on correctness, completeness and speed. ` +
-  `Respond concisely and professionally (2-4 sentences). ` +
-  `Do not mention that you are an AI model.`
+  agent.persona
+    ? `You are "${agent.name}", a ${agent.role} agent in a product development swarm. ` +
+      `Your capabilities: ${agent.tags.join(', ')}. ` +
+      `You are being evaluated on correctness, completeness and speed. ` +
+      `Respond concisely (2-4 sentences) and stay in character: ${agent.persona} ` +
+      `Do not mention that you are an AI model.`
+    : `You are "${agent.name}", a ${agent.role} agent in a product development swarm. ` +
+      `Your capabilities: ${agent.tags.join(', ')}. ` +
+      `You are being evaluated on correctness, completeness and speed. ` +
+      `Respond concisely and professionally (2-4 sentences). ` +
+      `Do not mention that you are an AI model.`
 
 // Extract clean text from a Gemini response (skips thought blocks)
-function extractText(data) {
+export function extractText(data) {
   const parts = data?.candidates?.[0]?.content?.parts || []
   return parts
     .filter((p) => p.text && p.thought !== true)
@@ -33,7 +40,7 @@ function extractText(data) {
 }
 
 // POST to Gemini with retry/backoff on 429 (rate limit) and 5xx
-async function geminiPost(body) {
+export async function geminiPost(body) {
   const maxAttempts = 4
   let delay = 5000
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {

@@ -30,7 +30,7 @@ export default function Dashboard() {
   }, [agents])
 
   if (!stats) {
-    return <div className="text-center py-24 text-slate-400 text-sm">Loading reputation data…</div>
+    return <div className="text-center py-24 text-slate-400 dark:text-slate-500 text-sm">Loading reputation data…</div>
   }
 
   const spark = agents[0].history.trust.map((d) => d.value)
@@ -40,18 +40,18 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-end justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Reputation Overview</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="font-sora text-2xl font-bold text-slate-900 dark:text-slate-100">Reputation Overview</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Live trust, completion and latency signals across {agents.length} audited agents.
           </p>
         </div>
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-1">
           {['24h', '7d', '30d'].map((r) => (
             <button
               key={r}
               onClick={() => setTimeRange(r)}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                timeRange === r ? 'bg-brand-600 text-white' : 'text-slate-500 hover:text-slate-800'
+                timeRange === r ? 'bg-brand-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
             >
               {r}
@@ -109,11 +109,11 @@ export default function Dashboard() {
         {Object.entries(STATUS_META).map(([key, meta]) => {
           const count = key === 'active' ? stats.active : key === 'degraded' ? stats.degraded : key === 'stalled' ? stats.stalled : agents.filter((a) => a.status === 'idle').length
           return (
-            <div key={key} className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center gap-3">
+            <div key={key} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center gap-3">
               <span className="w-2.5 h-2.5 rounded-full" style={{ background: meta.color }} />
               <div>
-                <div className="text-lg font-bold text-slate-900 leading-none">{count}</div>
-                <div className="text-[11px] text-slate-400 font-medium capitalize">{key}</div>
+                <div className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-none">{count}</div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 font-medium capitalize">{key}</div>
               </div>
             </div>
           )
@@ -122,24 +122,24 @@ export default function Dashboard() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-800">Trust trend — fleet average</h3>
-            <span className="text-[10px] text-slate-400">30 days</span>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Trust trend — fleet average</h3>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">30 days</span>
           </div>
           <TrustTrendChart data={agents[0].history.trust} />
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-800">Completion rate — fleet average</h3>
-            <span className="text-[10px] text-slate-400">30 days</span>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Completion rate — fleet average</h3>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">30 days</span>
           </div>
           <CompletionAreaChart data={agents[1].history.completion} />
         </div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-800">Response time — fleet average</h3>
-            <span className="text-[10px] text-slate-400">30 days</span>
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Response time — fleet average</h3>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">30 days</span>
           </div>
           <ResponseBarChart data={agents[2].history.response} />
         </div>
@@ -147,17 +147,17 @@ export default function Dashboard() {
 
       {/* Network + heatmap */}
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
-        <div className="xl:col-span-3 bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="xl:col-span-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-800">Swarm topology & peer audits</h3>
-            <Link to="/app/swarms" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Swarm topology & peer audits</h3>
+            <Link to="/app/swarms" className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 inline-flex items-center gap-1">
               Explore swarms <ArrowRight size={12} />
             </Link>
           </div>
           <NetworkGraph height={420} />
         </div>
         <div className="xl:col-span-2 space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
             <Heatmap data={agents[0].heatmap} title="Fleet activity — 7 days × 24h" />
           </div>
           <TaskRunner />
@@ -166,15 +166,15 @@ export default function Dashboard() {
 
       {/* Bottom row: distribution + top agents + audit feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
-          <h3 className="text-sm font-semibold text-slate-800 mb-2">Trust distribution</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">Trust distribution</h3>
           <TrustDistributionChart agents={agents} />
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-800">Top trusted agents</h3>
-            <Link to="/app/marketplace" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Top trusted agents</h3>
+            <Link to="/app/marketplace" className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 inline-flex items-center gap-1">
               Marketplace <ArrowRight size={12} />
             </Link>
           </div>
@@ -183,30 +183,30 @@ export default function Dashboard() {
               <Link
                 key={a.id}
                 to={`/app/agents/${a.id}`}
-                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: a.stage.color }}>
                   {i + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-slate-800 truncate">{a.name}</div>
-                  <div className="text-[11px] text-slate-400">{a.role}</div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{a.name}</div>
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500">{a.role}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-bold tabular-nums" style={{ color: trustColor(a.trustScore) }}>
                     {a.trustScore.toFixed(0)}
                   </div>
-                  <div className="text-[10px] text-slate-400">trust</div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500">trust</div>
                 </div>
               </Link>
             ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-800">Live audit feed</h3>
-            <Link to="/app/audits" className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Live audit feed</h3>
+            <Link to="/app/audits" className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 inline-flex items-center gap-1">
               Ledger <ArrowRight size={12} />
             </Link>
           </div>
@@ -219,15 +219,15 @@ export default function Dashboard() {
                   }`}
                 />
                 <div className="min-w-0">
-                  <div className="text-xs text-slate-700 leading-snug">
+                  <div className="text-xs text-slate-700 dark:text-slate-300 leading-snug">
                     <span className="font-semibold">{ev.auditor.name}</span> audited{' '}
                     <span className="font-semibold">{ev.agent.name}</span>
                     <span className={`ml-1 text-[10px] font-bold uppercase ${ev.verdict === 'pass' ? 'text-emerald-600' : ev.verdict === 'warn' ? 'text-amber-600' : 'text-red-500'}`}>
                       {ev.verdict}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400 truncate">{ev.note}</div>
-                  <div className="text-[10px] text-slate-300">{ev.ts}</div>
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{ev.note}</div>
+                  <div className="text-[10px] text-slate-300 dark:text-slate-600">{ev.ts}</div>
                 </div>
               </div>
             ))}
@@ -238,10 +238,10 @@ export default function Dashboard() {
       {/* Featured agents */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-800 inline-flex items-center gap-2">
-            <Bot size={15} className="text-brand-600" /> Featured agents
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 inline-flex items-center gap-2">
+            <Bot size={15} className="text-brand-600 dark:text-brand-400" /> Featured agents
           </h3>
-          <Link to="/app/marketplace" className="text-xs font-semibold text-brand-600 hover:text-brand-700">
+          <Link to="/app/marketplace" className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300">
             View all →
           </Link>
         </div>

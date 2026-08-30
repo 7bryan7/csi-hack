@@ -18,21 +18,21 @@ export default function KpiCard({ title, value, unit, delta, deltaLabel, spark, 
   return (
     <button
       onClick={cycle}
-      className="card-lift w-full text-left bg-white rounded-2xl border border-slate-200 p-5 group"
+      className="card-lift w-full text-left bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 group"
       title="Click to cycle: value → change → trend"
     >
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2 text-slate-500 text-xs font-semibold uppercase tracking-wide">
+        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wide">
           {Icon && <Icon size={14} style={{ color: accent }} />}
           {title}
         </div>
-        <ArrowUpRight size={14} className="text-slate-300 group-hover:text-slate-500 transition-colors" />
+        <ArrowUpRight size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />
       </div>
 
       {mode === 0 && (
         <div className="mt-3 flex items-baseline gap-1.5">
-          <span className="text-3xl font-bold text-slate-900 tabular-nums">{value}</span>
-          {unit && <span className="text-sm text-slate-400 font-medium">{unit}</span>}
+          <span className="text-3xl font-bold text-slate-900 dark:text-slate-100 tabular-nums">{value}</span>
+          {unit && <span className="text-sm text-slate-400 dark:text-slate-500 font-medium">{unit}</span>}
         </div>
       )}
 
@@ -46,7 +46,7 @@ export default function KpiCard({ title, value, unit, delta, deltaLabel, spark, 
             {up ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
             {up ? '+' : ''}{delta}%
           </span>
-          <span className="text-xs text-slate-400">{deltaLabel}</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">{deltaLabel}</span>
         </div>
       )}
 
@@ -65,7 +65,7 @@ export default function KpiCard({ title, value, unit, delta, deltaLabel, spark, 
         </div>
       )}
 
-      <div className="mt-2 flex items-center gap-1 text-[10px] text-slate-400">
+      <div className="mt-2 flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
         <span className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
         {mode === 0 ? 'Click for change' : mode === 1 ? 'Click for trend' : 'Click for value'}
       </div>

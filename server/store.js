@@ -1,37 +1,71 @@
 // ---------------------------------------------------------------------------
-// In-memory store: executions, audits, tasks.
+// In-memory store: executions, audits, tasks, users.
 // NO synthetic seed — every record is produced by a real runtime call
 // (Gemini when live, simulation only as a fallback). Metrics are always
 // computed from these real records.
+//
+// Persistence: SQLite via db.js (PRD v2 §6.4). The in-memory arrays are the
+// runtime working set; saveStore() writes the durable copy, loadStore() reads
+// it back (with one-time migration from the legacy store.json).
 // ---------------------------------------------------------------------------
 
 import { AGENTS } from './agents.js'
 import { runAgent, auditOutput } from './runtime.js'
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { dbSaveAll, dbLoadAll, migrateLegacyJson, dbMaxSeq, dbCounts } from './db.js'
 
 export const store = {
   executions: [], // { id, agentId, task, output, success, latencyMs, ts }
   audits: [], // { id, agentId, auditorId, task, output, verdict, note, ts }
   tasks: [], // { id, task, agentId, status, ts }
+  users: [], // { id, name, email, picture, walletAddress, created_at }
+  agents: [], // custom agents minted on-chain (PRD §4.3); flagship roster lives in agents.js
+  feedPosts: [], // { id, agentId, content, status: pending|live, auditScore, audit, ts } (PRD §4.4)
+  feedReactions: [], // { id, postId, agentId, reaction, auditScore, ts }
   seq: 0,
   warmup: { running: false, done: 0, total: 0, startedAt: null, finishedAt: null },
+  feed: { enabled: true, intervalMs: 300000, lastCycleAt: null, lastCycleCount: 0, nextCycleAt: null },
+  // Reputation protocol config — weights must sum to 1.0; hireThreshold gates
+  // marketplace eligibility (composite reputationScore >= threshold).
+  config: {
+    reputation: { trust: 0.4, completion: 0.2, latency: 0.2, social: 0.2 },
+    hireThreshold: 70,
+    feedFocus: {}, // agentId → focus prompt for the next feed cycle (PRD §4.4)
+  },
+}
+
+// Merged roster: flagship (code-defined) + custom (on-chain minted).
+export function getAllAgents() {
+  return [...AGENTS, ...store.agents]
+}
+
+export function getAgent(id) {
+  return AGENTS.find((a) => a.id === id) || store.agents.find((a) => a.id === id) || null
 }
 
 // ---------------------------------------------------------------------------
-// Persistence — real records survive restarts (JSON file, git-ignored).
+// Persistence — real records survive restarts (SQLite, git-ignored).
 // ---------------------------------------------------------------------------
-const DATA_DIR = fileURLToPath(new URL('../data', import.meta.url))
-const DATA_FILE = `${DATA_DIR}/store.json`
-
 export function loadStore() {
   try {
-    if (!existsSync(DATA_FILE)) return false
-    const raw = JSON.parse(readFileSync(DATA_FILE, 'utf8'))
-    store.executions = raw.executions || []
-    store.audits = raw.audits || []
-    store.tasks = raw.tasks || []
-    store.seq = raw.seq || 0
+    migrateLegacyJson()
+    const data = dbLoadAll()
+    store.executions = data.executions
+    store.audits = data.audits
+    store.tasks = data.tasks
+    store.users = data.users
+    store.agents = data.agents
+    store.feedPosts = data.feedPosts || []
+    store.feedReactions = data.feedReactions || []
+    if (data.config.reputation) {
+      store.config = {
+        reputation: { ...store.config.reputation, ...data.config.reputation },
+        hireThreshold:
+          typeof data.config.hireThreshold === 'number' ? data.config.hireThreshold : store.config.hireThreshold,
+        feedFocus: data.config.feedFocus || {},
+      }
+    }
+    const counts = dbCounts()
+    store.seq = Math.max(dbMaxSeq(), counts.executions + counts.audits + counts.tasks + counts.users)
     return store.executions.length > 0 || store.audits.length > 0
   } catch (e) {
     console.error('[store] failed to load persisted data:', e.message)
@@ -44,17 +78,16 @@ export function saveStore() {
   clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     try {
-      mkdirSync(DATA_DIR, { recursive: true })
-      writeFileSync(
-        DATA_FILE,
-        JSON.stringify({
-          executions: store.executions,
-          audits: store.audits,
-          tasks: store.tasks,
-          seq: store.seq,
-          savedAt: Date.now(),
-        })
-      )
+      dbSaveAll({
+        users: store.users,
+        agents: store.agents, // custom on-chain agents
+        executions: store.executions,
+        audits: store.audits,
+        tasks: store.tasks,
+        config: store.config,
+        feedPosts: store.feedPosts,
+        feedReactions: store.feedReactions,
+      })
     } catch (e) {
       console.error('[store] failed to persist:', e.message)
     }

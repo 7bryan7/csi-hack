@@ -90,21 +90,21 @@ export default function CompareModal({ agents, onClose, onRemove }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-2">
-            <Crown size={16} className="text-brand-600" />
-            <h2 className="text-base font-bold text-slate-900">Agent comparison</h2>
-            <span className="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">
+            <Crown size={16} className="text-brand-600 dark:text-brand-400" />
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Agent comparison</h2>
+            <span className="text-[10px] font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 px-2 py-0.5 rounded-full">
               {agents.length} agents
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title="Close"
           >
             <X size={18} />
@@ -126,8 +126,8 @@ export default function CompareModal({ agents, onClose, onRemove }) {
                   >
                     <Bot size={22} />
                   </div>
-                  <div className="mt-2 font-bold text-slate-900 text-sm leading-tight">{a.name}</div>
-                  <div className="text-[11px] text-slate-400">{a.role}</div>
+                  <div className="mt-2 font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight">{a.name}</div>
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500">{a.role}</div>
                   <div className="mt-1.5 flex items-center justify-center gap-1.5">
                     <span
                       className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
@@ -142,7 +142,7 @@ export default function CompareModal({ agents, onClose, onRemove }) {
                       {a.stage.label}
                     </span>
                   </div>
-                  <p className="mt-2 text-[11px] text-slate-500 leading-relaxed line-clamp-3 min-h-[3rem]">
+                  <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3 min-h-[3rem]">
                     {a.description}
                   </p>
                 </div>
@@ -157,25 +157,25 @@ export default function CompareModal({ agents, onClose, onRemove }) {
                 key={row.key}
                 className="grid grid-cols-[110px_repeat(3,1fr)] sm:grid-cols-[140px_repeat(3,1fr)] gap-3 items-center py-2.5 border-b border-slate-50 last:border-0"
               >
-                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{row.label}</div>
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{row.label}</div>
                 {agents.map((a) => {
                   const isBest = row.isBest(a)
                   return (
                     <div key={a.id} className="text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <span
-                          className={`text-sm font-bold tabular-nums ${isBest ? 'text-emerald-600' : 'text-slate-800'}`}
+                          className={`text-sm font-bold tabular-nums ${isBest ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`}
                         >
                           {row.value(a)}
                         </span>
                         {isBest && (
-                          <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-0.5 text-[8px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10 px-1 py-0.5 rounded-full">
                             <Crown size={8} /> Best
                           </span>
                         )}
                       </div>
                       {row.bar && (
-                        <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div className="mt-1.5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
                             style={{
@@ -194,7 +194,7 @@ export default function CompareModal({ agents, onClose, onRemove }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/60 flex flex-wrap items-center gap-2 shrink-0">
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 flex flex-wrap items-center gap-2 shrink-0">
           {agents.map((a) => (
             <div key={a.id} className="flex items-center gap-1.5">
               <button
@@ -202,20 +202,20 @@ export default function CompareModal({ agents, onClose, onRemove }) {
                   onClose()
                   navigate(`/app/agents/${a.id}`)
                 }}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-white border border-slate-200 rounded-lg px-3 py-1.5 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-1.5 transition-colors"
               >
                 {a.name} <ArrowUpRight size={12} />
               </button>
               <button
                 onClick={() => onRemove(a.id)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                 title={`Remove ${a.name}`}
               >
                 <Trash2 size={13} />
               </button>
             </div>
           ))}
-          <span className="ml-auto text-[11px] text-slate-400">
+          <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500">
             Best value per metric is highlighted in green
           </span>
         </div>

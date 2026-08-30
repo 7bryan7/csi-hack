@@ -1,0 +1,304 @@
+// ---------------------------------------------------------------------------
+// SQLite persistence layer (PRD v2 §6.4 — "replace the flat JSON file with a
+// real database; SQLite is enough for a hackathon").
+//
+// The in-memory store (store.js) remains the runtime working set — metrics and
+// API handlers read it synchronously. This module owns the durable copy:
+//   - schema (agents with owner fields, users, executions, audits, tasks,
+//     config, feed tables for Phase 2)
+//   - one-time migration from the legacy data/store.json when the DB is empty
+//   - save/load of every collection
+// ---------------------------------------------------------------------------
+
+import Database from 'better-sqlite3'
+import { mkdirSync, existsSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+
+const DATA_DIR = fileURLToPath(new URL('../data', import.meta.url))
+const DB_FILE = `${DATA_DIR}/store.db`
+const LEGACY_FILE = `${DATA_DIR}/store.json`
+
+mkdirSync(DATA_DIR, { recursive: true })
+
+export const db = new Database(DB_FILE)
+db.pragma('journal_mode = WAL')
+
+// ---------------------------------------------------------------------------
+// Schema
+// ---------------------------------------------------------------------------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id            TEXT PRIMARY KEY,          -- email (Google sub as fallback)
+    name          TEXT NOT NULL,
+    email         TEXT NOT NULL,
+    picture       TEXT,
+    walletAddress TEXT,                      -- connected wallet (PRD §4.1)
+    created_at    INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS agents (
+    id            TEXT PRIMARY KEY,
+    name          TEXT NOT NULL,
+    role          TEXT NOT NULL,
+    gender        TEXT,
+    stage         TEXT NOT NULL,
+    specialty     TEXT NOT NULL,             -- constrained to fixed category list
+    description   TEXT,
+    tags          TEXT,                      -- JSON array
+    price         REAL,
+    persona       TEXT,
+    ownerId       TEXT,                      -- NULL = platform-owned flagship
+    walletAddress TEXT,                      -- owner payout wallet
+    mintTxHash    TEXT,                      -- verified on-chain mint (PRD §4.3)
+    created_at    INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS executions (
+    id        TEXT PRIMARY KEY,
+    agentId   TEXT NOT NULL,
+    task      TEXT NOT NULL,
+    output    TEXT,
+    success   INTEGER NOT NULL,
+    latencyMs INTEGER NOT NULL,
+    ts        INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_exec_agent ON executions(agentId);
+
+  CREATE TABLE IF NOT EXISTS audits (
+    id        TEXT PRIMARY KEY,
+    agentId   TEXT NOT NULL,
+    auditorId TEXT NOT NULL,
+    task      TEXT NOT NULL,
+    output    TEXT,
+    verdict   TEXT NOT NULL,
+    note      TEXT,
+    ts        INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_audit_agent ON audits(agentId);
+
+  CREATE TABLE IF NOT EXISTS tasks (
+    id          TEXT PRIMARY KEY,
+    task        TEXT NOT NULL,
+    agentId     TEXT NOT NULL,
+    status      TEXT NOT NULL,
+    executionId TEXT,
+    ts          INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS config (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL                    -- JSON-encoded
+  );
+
+  -- Phase 2: social training feed
+  CREATE TABLE IF NOT EXISTS feed_posts (
+    id         TEXT PRIMARY KEY,
+    agentId    TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    status     TEXT NOT NULL DEFAULT 'live',  -- pending | live (user approval gate)
+    auditScore REAL,                          -- Gemini audit of the post
+    ts         INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_feed_agent ON feed_posts(agentId);
+
+  CREATE TABLE IF NOT EXISTS feed_reactions (
+    id       TEXT PRIMARY KEY,
+    postId   TEXT NOT NULL,
+    agentId  TEXT NOT NULL,
+    reaction TEXT NOT NULL,
+    ts       INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_reaction_post ON feed_reactions(postId);
+`)
+
+// Schema evolution: add columns to tables created by older schema versions.
+// Must run before statements are prepared below.
+function ensureColumn(table, column, ddl) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name)
+  if (!cols.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`)
+}
+// feed_reactions gained auditScore when the feed audit engine landed (PRD §4.4)
+ensureColumn('feed_reactions', 'auditScore', 'auditScore REAL')
+// tasks gained escrow fields when the hiring flow landed (PRD §4.6)
+ensureColumn('tasks', 'escrowTaskId', 'escrowTaskId TEXT')
+ensureColumn('tasks', 'consumer', 'consumer TEXT')
+ensureColumn('tasks', 'amountEth', 'amountEth REAL')
+ensureColumn('tasks', 'txHash', 'txHash TEXT')
+ensureColumn('tasks', 'payoutEth', 'payoutEth REAL')
+ensureColumn('tasks', 'feeEth', 'feeEth REAL')
+ensureColumn('tasks', 'paidAt', 'paidAt INTEGER')
+
+// ---------------------------------------------------------------------------
+// Collection load/save
+// ---------------------------------------------------------------------------
+const stmts = {
+  users: {
+    insert: db.prepare(
+      `INSERT OR REPLACE INTO users (id, name, email, picture, walletAddress, created_at)
+       VALUES (@id, @name, @email, @picture, @walletAddress, @created_at)`
+    ),
+    all: db.prepare('SELECT * FROM users'),
+  },
+  agents: {
+    insert: db.prepare(
+      `INSERT OR REPLACE INTO agents
+         (id, name, role, gender, stage, specialty, description, tags, price, persona,
+          ownerId, walletAddress, mintTxHash, created_at)
+       VALUES
+         (@id, @name, @role, @gender, @stage, @specialty, @description, @tags, @price, @persona,
+          @ownerId, @walletAddress, @mintTxHash, @created_at)`
+    ),
+    all: db.prepare('SELECT * FROM agents'),
+  },
+  executions: {
+    insert: db.prepare(
+      `INSERT OR REPLACE INTO executions (id, agentId, task, output, success, latencyMs, ts)
+       VALUES (@id, @agentId, @task, @output, @success, @latencyMs, @ts)`
+    ),
+    all: db.prepare('SELECT * FROM executions'),
+  },
+  audits: {
+    insert: db.prepare(
+      `INSERT OR REPLACE INTO audits (id, agentId, auditorId, task, output, verdict, note, ts)
+       VALUES (@id, @agentId, @auditorId, @task, @output, @verdict, @note, @ts)`
+    ),
+    all: db.prepare('SELECT * FROM audits'),
+  },
+  tasks: {
+    insert: db.prepare(
+      `INSERT OR REPLACE INTO tasks (id, task, agentId, status, executionId, ts)
+       VALUES (@id, @task, @agentId, @status, @executionId, @ts)`
+    ),
+    all: db.prepare('SELECT * FROM tasks'),
+  },
+  config: {
+    upsert: db.prepare(
+      `INSERT INTO config (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+    ),
+    all: db.prepare('SELECT key, value FROM config'),
+  },
+  feed_posts: {
+    insert: db.prepare(
+      `INSERT OR REPLACE INTO feed_posts (id, agentId, content, status, auditScore, ts)
+       VALUES (@id, @agentId, @content, @status, @auditScore, @ts)`
+    ),
+    all: db.prepare('SELECT * FROM feed_posts'),
+  },
+  feed_reactions: {
+    insert: db.prepare(
+      `INSERT OR REPLACE INTO feed_reactions (id, postId, agentId, reaction, auditScore, ts)
+       VALUES (@id, @postId, @agentId, @reaction, @auditScore, @ts)`
+    ),
+    all: db.prepare('SELECT * FROM feed_reactions'),
+  },
+}
+
+// Row → in-memory shape (SQLite booleans are 0/1, tags are JSON strings,
+// stage is stored as its id and restored to the lifecycle object)
+const STAGE_BY_ID = {
+  discovery: { id: 'discovery', label: 'Discovery', color: '#6366f1' },
+  design: { id: 'design', label: 'Design', color: '#8b5cf6' },
+  development: { id: 'development', label: 'Development', color: '#3d6cec' },
+  qa: { id: 'qa', label: 'QA & Security', color: '#f59e0b' },
+  deployment: { id: 'deployment', label: 'Deployment', color: '#10b981' },
+  operations: { id: 'operations', label: 'Operations', color: '#ef4444' },
+}
+function rowToExec(row) {
+  return { ...row, success: !!row.success }
+}
+function rowToAgent(row) {
+  return { ...row, tags: row.tags ? JSON.parse(row.tags) : [], stage: STAGE_BY_ID[row.stage] || row.stage }
+}
+
+export function dbSaveAll({ users, agents, executions, audits, tasks, config, feedPosts, feedReactions }) {
+  const tx = db.transaction(() => {
+    users.forEach((u) => stmts.users.insert.run(u))
+    agents.forEach((a) =>
+      stmts.agents.insert.run({
+        ...a,
+        tags: JSON.stringify(a.tags || []),
+        stage: typeof a.stage === 'string' ? a.stage : a.stage?.id,
+      })
+    )
+    executions.forEach((e) => stmts.executions.insert.run({ ...e, success: e.success ? 1 : 0 }))
+    audits.forEach((a) => stmts.audits.insert.run(a))
+    tasks.forEach((t) => stmts.tasks.insert.run(t))
+    Object.entries(config).forEach(([k, v]) => stmts.config.upsert.run(k, JSON.stringify(v)))
+    ;(feedPosts || []).forEach((p) => stmts.feed_posts.insert.run(p))
+    ;(feedReactions || []).forEach((r) => stmts.feed_reactions.insert.run(r))
+  })
+  tx()
+}
+
+export function dbLoadAll() {
+  const users = stmts.users.all.all()
+  const agents = stmts.agents.all.all().map(rowToAgent)
+  const executions = stmts.executions.all.all().map(rowToExec)
+  const audits = stmts.audits.all.all()
+  const tasks = stmts.tasks.all.all()
+  const feedPosts = stmts.feed_posts.all.all()
+  const feedReactions = stmts.feed_reactions.all.all()
+  const config = {}
+  stmts.config.all.all().forEach(({ key, value }) => {
+    try {
+      config[key] = JSON.parse(value)
+    } catch {
+      /* ignore malformed config rows */
+    }
+  })
+  return { users, agents, executions, audits, tasks, config, feedPosts, feedReactions }
+}
+
+// ---------------------------------------------------------------------------
+// One-time migration from the legacy JSON store (data/store.json).
+// Runs only when the DB has no records and the legacy file exists.
+// ---------------------------------------------------------------------------
+export function migrateLegacyJson() {
+  if (!existsSync(LEGACY_FILE)) return false
+  const { executions, audits, tasks, config } = dbLoadAll()
+  if (executions.length || audits.length || tasks.length) return false
+  try {
+    const raw = JSON.parse(readFileSync(LEGACY_FILE, 'utf8'))
+    const migrated = {
+      users: [],
+      agents: [],
+      executions: raw.executions || [],
+      audits: raw.audits || [],
+      tasks: raw.tasks || [],
+      config: raw.config || {},
+    }
+    dbSaveAll(migrated)
+    console.log(
+      `[db] migrated ${migrated.executions.length} executions, ${migrated.audits.length} audits from store.json`
+    )
+    return true
+  } catch (e) {
+    console.error('[db] legacy migration failed:', e.message)
+    return false
+  }
+}
+
+export function dbCounts() {
+  return {
+    executions: db.prepare('SELECT COUNT(*) c FROM executions').get().c,
+    audits: db.prepare('SELECT COUNT(*) c FROM audits').get().c,
+    tasks: db.prepare('SELECT COUNT(*) c FROM tasks').get().c,
+    users: db.prepare('SELECT COUNT(*) c FROM users').get().c,
+    agents: db.prepare('SELECT COUNT(*) c FROM agents').get().c,
+  }
+}
+
+// Highest numeric id suffix across all tables — keeps nextId() collision-free
+// even after records are deleted (counts alone would reuse ids).
+export function dbMaxSeq() {
+  const tables = ['executions', 'audits', 'tasks', 'users', 'agents', 'feed_posts', 'feed_reactions']
+  let max = 0
+  for (const t of tables) {
+    const row = db.prepare(`SELECT id FROM ${t} ORDER BY id DESC LIMIT 1`).get()
+    if (!row) continue
+    const m = /-(\d+)$/.exec(row.id)
+    if (m) max = Math.max(max, parseInt(m[1], 10))
+  }
+  return max
+}

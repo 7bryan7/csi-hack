@@ -13,6 +13,24 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Theme-aware SVG colors (charts, heatmap, network graph) */
+:root {
+  --chart-grid: #eef2f7;
+  --chart-axis: #e2e8f0;
+  --chart-cursor: #f1f5f9;
+  --heat-empty: #eef2f7;
+  --graph-edge: #cbd5e1;
+  --graph-node: #ffffff;
+}
+.dark {
+  --chart-grid: #1e293b;
+  --chart-axis: #334155;
+  --chart-cursor: #334155;
+  --heat-empty: #1e293b;
+  --graph-edge: #334155;
+  --graph-node: #1e293b;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -44,8 +62,8 @@ body {
 }
 .card-lift-glass:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12px 32px rgba(30, 41, 59, 0.12);
+  border-color: rgba(45, 79, 224, 0.3);
 }
 
 /* Pulse dot for live status */
@@ -58,46 +76,16 @@ body {
   animation: pulse-ring 2s infinite;
 }
 
-/* ── Awwwards-style CTA button (GET STARTED) ─────────────────────── */
-/* Animations are OFF by default and only activate when the cursor is
-   within the 250px reveal range (see .btn-active below). */
-@keyframes btn-gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-@keyframes btn-shine {
-  0%, 55% { transform: translateX(-140%) skewX(-20deg); }
-  100% { transform: translateX(340%) skewX(-20deg); }
-}
+/* ── CTA button (GET STARTED) ─────────────────────────────────────── */
+/* Static purple. Enlarges only while the cursor is within the 250px
+   reveal range (see .btn-active below). */
 .btn-awwwards {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(120deg, #2d4fe0, #7c3aed, #0d9488, #2d4fe0);
-  background-size: 300% 300%;
+  background: #7c3aed;
   transition: transform 0.2s ease;
 }
-.btn-awwwards:hover {
-  transform: scale(1.04);
-}
-.btn-awwwards::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 40%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-/* Cursor within 250px of the button → animations play */
+/* Cursor within 250px of the button → enlarge */
 .btn-awwwards.btn-active {
-  animation: btn-gradient 8s ease infinite;
-}
-.btn-awwwards.btn-active::before {
-  opacity: 1;
-  animation: btn-shine 4.5s ease-in-out infinite;
+  transform: scale(1.05);
 }
 
 /* ── Cursor spotlight reveal (landing page) ──────────────────────── */
@@ -128,6 +116,7 @@ body {
   height: 100%;
   object-fit: cover;
   transform: scale(1.1); /* matches the blurred layer's scale-110 */
+  filter: brightness(0.75); /* matches the blurred layer's brightness-75 */
 }
 
 /* ── Targeting-reticle cursor (landing page) ────────────────────── */

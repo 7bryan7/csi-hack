@@ -42,7 +42,7 @@ export default function GlassGoogleButton({
   if (!clientId) {
     return (
       <div
-        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 text-slate-300 text-sm font-medium border border-white/15 backdrop-blur-md ${buttonClassName}`}
+        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 text-slate-300 text-sm font-semibold border border-white/15 backdrop-blur-md ${buttonClassName}`}
       >
         <GoogleG />
         Google sign-in not configured

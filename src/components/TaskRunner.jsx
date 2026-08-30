@@ -60,15 +60,15 @@ export default function TaskRunner() {
   const busy = running || auditing
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
       <div className="flex items-center gap-2 mb-1">
-        <Zap size={16} className="text-brand-600" />
-        <h3 className="text-sm font-semibold text-slate-800">Live task runner</h3>
-        <span className="ml-auto text-[10px] text-slate-400">
+        <Zap size={16} className="text-brand-600 dark:text-brand-400" />
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Live task runner</h3>
+        <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-500">
           {mode === 'gemini' ? 'Gemini runtime' : mode === 'simulated' ? 'Simulated runtime' : 'Backend offline'}
         </span>
       </div>
-      <p className="text-xs text-slate-500 mb-3">
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
         Submit a task — the orchestrator routes it to the highest-trust agent, then a peer audits the output.
       </p>
 
@@ -78,12 +78,12 @@ export default function TaskRunner() {
           onChange={(e) => setTask(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && execute()}
           placeholder="Describe a task for the swarm…"
-          className="flex-1 px-3 py-2 rounded-lg bg-slate-100 border border-transparent focus:bg-white focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
+          className="flex-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-brand-300 dark:focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-500/20 outline-none text-sm"
         />
         <select
           value={stage}
           onChange={(e) => setStage(e.target.value)}
-          className="px-2.5 py-2 rounded-lg bg-slate-100 border border-transparent outline-none text-xs text-slate-600"
+          className="px-2.5 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-transparent outline-none text-xs text-slate-600 dark:text-slate-400"
           title="Route to a specific lifecycle stage (empty = auto)"
         >
           <option value="">Auto-route</option>
@@ -106,7 +106,7 @@ export default function TaskRunner() {
           <button
             key={s}
             onClick={() => setTask(s)}
-            className="text-[10px] px-2 py-1 rounded-md bg-slate-100 text-slate-500 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+            className="text-[10px] px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-700 dark:hover:text-brand-300 transition-colors"
           >
             {s.length > 42 ? s.slice(0, 42) + '…' : s}
           </button>
@@ -114,24 +114,24 @@ export default function TaskRunner() {
       </div>
 
       {error && (
-        <div className="mt-3 text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</div>
+        <div className="mt-3 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 rounded-lg px-3 py-2">{error}</div>
       )}
 
       {result && (
         <div className="mt-4 space-y-3">
           {/* Routing + execution */}
-          <div className="rounded-xl border border-slate-200 p-3.5">
-            <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-              <Bot size={13} className="text-brand-600" />
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+              <Bot size={13} className="text-brand-600 dark:text-brand-400" />
               Routed to
               <ArrowRight size={11} />
-              <span className="font-bold text-slate-800">{result.routedTo.name}</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">{result.routedTo.name}</span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: trustColor(result.routedTo.trustScore), background: `${trustColor(result.routedTo.trustScore)}14` }}>
                 trust {result.routedTo.trustScore.toFixed(0)}
               </span>
-              <span className="ml-auto text-[10px] text-slate-400">{result.execution.latencyMs}ms · {result.execution.success ? 'success' : 'failed'}</span>
+              <span className="ml-auto text-[10px] text-slate-400 dark:text-slate-500">{result.execution.latencyMs}ms · {result.execution.success ? 'success' : 'failed'}</span>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 rounded-lg px-3 py-2">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-800/50 rounded-lg px-3 py-2">
               “{result.execution.output}”
             </p>
           </div>
@@ -141,18 +141,18 @@ export default function TaskRunner() {
             <button
               onClick={auditNow}
               disabled={auditing}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border-2 border-dashed border-brand-300 text-brand-700 text-sm font-semibold hover:bg-brand-50 disabled:opacity-40 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border-2 border-dashed border-brand-300 dark:border-brand-500/30 text-brand-700 dark:text-brand-300 text-sm font-semibold hover:bg-brand-50 dark:hover:bg-brand-500/10 disabled:opacity-40 transition-colors"
             >
               {auditing ? <Loader2 size={15} className="animate-spin" /> : <ShieldCheck size={15} />}
               {auditing ? 'Peer auditing…' : 'Trigger peer audit'}
             </button>
           ) : (
-            <div className="rounded-xl border border-slate-200 p-3.5">
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-                <ShieldCheck size={13} className="text-brand-600" />
-                <span className="font-bold text-slate-800">{audit.audit.auditor.name}</span>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3.5">
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
+                <ShieldCheck size={13} className="text-brand-600 dark:text-brand-400" />
+                <span className="font-bold text-slate-800 dark:text-slate-200">{audit.audit.auditor.name}</span>
                 audited
-                <span className="font-bold text-slate-800">{audit.audit.agent.name}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{audit.audit.agent.name}</span>
                 {(() => {
                   const m = VERDICT_META[audit.audit.verdict]
                   const Icon = m.icon
@@ -163,13 +163,13 @@ export default function TaskRunner() {
                   )
                 })()}
               </div>
-              <p className="text-xs text-slate-600 bg-slate-50 rounded-lg px-3 py-2">{audit.audit.note}</p>
-              <div className="mt-2 text-[11px] text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-lg px-3 py-2">{audit.audit.note}</p>
+              <div className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
                 Trust updated:{' '}
                 <span className="font-bold" style={{ color: trustColor(audit.updatedAgent.trustScore) }}>
                   {audit.updatedAgent.trustScore.toFixed(1)}
                 </span>{' '}
-                <span className="text-slate-300">(was {result.routedTo.trustScore.toFixed(1)})</span>
+                <span className="text-slate-300 dark:text-slate-600">(was {result.routedTo.trustScore.toFixed(1)})</span>
               </div>
             </div>
           )}

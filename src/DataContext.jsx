@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { api } from './api'
+import { api, DEFAULT_CONFIG } from './api'
 
 const DataContext = createContext(null)
 
@@ -16,19 +16,23 @@ export function DataProvider({ children }) {
   const [mode, setMode] = useState('loading')
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [config, setConfig] = useState(DEFAULT_CONFIG)
+  const [chain, setChain] = useState(null)
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    Promise.all([api.agents(), api.swarms(), api.audits()]).then(([a, s, au]) => {
+    Promise.all([api.agents(), api.swarms(), api.audits(), api.config(), api.chain()]).then(([a, s, au, c, ch]) => {
       if (cancelled) return
       setAgents(a.agents)
       setSwarms(s.swarms)
       setAudits(au.audits)
       setAuditTotal(au.total || au.audits.length)
       setMode(a.mode)
+      setConfig(c.config)
+      setChain(ch.chain)
       setLoading(false)
     })
     return () => {
@@ -54,9 +58,37 @@ export function DataProvider({ children }) {
     [refresh]
   )
 
+  const updateConfig = useCallback(
+    async (patch) => {
+      const d = await api.updateConfig(patch)
+      setConfig(d.config)
+      refresh()
+      return d.config
+    },
+    [refresh]
+  )
+
+  const hireTask = useCallback(
+    async (payload) => {
+      const result = await api.hireTask(payload)
+      refresh()
+      return result
+    },
+    [refresh]
+  )
+
+  const confirmTask = useCallback(
+    async (taskId, txHash) => {
+      const result = await api.confirmTask(taskId, txHash)
+      refresh()
+      return result
+    },
+    [refresh]
+  )
+
   return (
     <DataContext.Provider
-      value={{ agents, swarms, audits, auditTotal, mode, loading, refresh, runTask, auditTask }}
+      value={{ agents, swarms, audits, auditTotal, mode, loading, refresh, runTask, auditTask, config, updateConfig, chain, hireTask, confirmTask }}
     >
       {children}
     </DataContext.Provider>

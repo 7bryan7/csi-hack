@@ -79,26 +79,26 @@ function StepCard({ icon: Icon, title, text, step, hasArrow, offsetClass = '' })
       <div
         ref={ref}
         onMouseMove={handleMove}
-        className="relative h-full rounded-2xl bg-white/20 backdrop-blur-md border border-white/15 p-6 overflow-hidden transition-all duration-300 group-hover:-translate-y-1.5 group-hover:border-white/35 group-hover:shadow-2xl group-hover:shadow-black/40"
+        className="relative h-full rounded-2xl bg-slate-50 border border-slate-200 p-6 overflow-hidden transition-all duration-300 group-hover:-translate-y-1.5 group-hover:border-brand-300 group-hover:shadow-2xl group-hover:shadow-slate-900/15"
       >
         {/* cursor spotlight */}
         <div
           className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           style={{
             background:
-              'radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.14), transparent 70%)',
+              'radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(45,79,224,0.08), transparent 70%)',
           }}
         />
         <div className="relative flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-brand-500/20 text-brand-300 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
+          <div className="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
             <Icon size={16} />
           </div>
-          <span className="text-[11px] font-bold text-slate-300 transition-colors duration-300 group-hover:text-white">
+          <span className="text-[11px] font-bold text-slate-500 transition-colors duration-300 group-hover:text-brand-600">
             STEP {step}
           </span>
         </div>
-        <div className="relative text-sm font-bold text-white">{title}</div>
-        <p className="relative mt-1 text-xs text-white leading-relaxed">{text}</p>
+        <div className="relative text-sm font-bold text-slate-900">{title}</div>
+        <p className="relative mt-1 text-xs text-slate-600 leading-relaxed">{text}</p>
       </div>
       {hasArrow && (
         <svg
@@ -172,7 +172,7 @@ export default function Landing() {
         <img
           src="/background.png"
           alt=""
-          className="w-full h-full object-cover blur-[14.4px] scale-110"
+          className="w-full h-full object-cover blur-[14.4px] scale-110 brightness-75"
         />
         {/* Dark scrim for text readability — tweak opacity to taste */}
         <div className="absolute inset-0 bg-slate-950/55" />
@@ -187,13 +187,13 @@ export default function Landing() {
           className={`sticky z-40 transition-[top,padding] duration-0 ${
             scrolled
               ? 'top-3 px-4'
-              : 'top-0 bg-slate-950/40 backdrop-blur-md border-b border-white/10'
+              : 'top-0 bg-gradient-to-r from-brand-600 to-violet-600 border-b border-white/15'
           }`}
         >
           <div
             className={`max-w-6xl mx-auto flex items-center gap-3 transition-all duration-0 ${
               scrolled
-                ? 'h-16 px-6 rounded-full bg-slate-950/60 backdrop-blur-xl border border-white/15 shadow-lg shadow-black/30'
+                ? 'h-16 px-6 rounded-full bg-gradient-to-r from-brand-600 to-violet-600 border border-white/20 shadow-lg shadow-black/40'
                 : 'h-[79px] px-6'
             }`}
           >
@@ -205,14 +205,14 @@ export default function Landing() {
               />
             </div>
             <div>
-              <div className="font-bold leading-tight text-white">OnlyAgent</div>
-              <div className="text-[10px] text-slate-400 font-medium tracking-wide uppercase">Reputation Engine</div>
+              <div className="font-semibold leading-tight text-white">OnlyAgent</div>
+              <div className="text-[10px] text-white/70 font-medium tracking-wide uppercase">Reputation Engine</div>
             </div>
             <div className="ml-auto flex items-center gap-3">
               {user ? (
                 <Link
                   to="/app"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-brand-700 text-sm font-semibold hover:bg-white/90 transition-colors"
                 >
                   Open dashboard <ArrowRight size={15} />
                 </Link>
@@ -220,7 +220,7 @@ export default function Landing() {
                 <GlassGoogleButton
                   label="Sign in with Google"
                   width={220}
-                  buttonClassName="px-5 py-2.5 text-sm border border-white/15 bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors"
+                  buttonClassName="px-5 py-2.5 text-sm border border-white/25 bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors"
                 />
               )}
             </div>
@@ -234,7 +234,7 @@ export default function Landing() {
               <Sparkles size={13} />
               Peer-audited reputation for autonomous agents
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
+            <h1 className="font-sora text-4xl md:text-6xl font-bold tracking-tight leading-tight">
               The reputation layer
               <br />
               for the <span className="text-brand-400">agent economy</span>
@@ -266,36 +266,36 @@ export default function Landing() {
             </div>
 
             {/* Mock dashboard strip */}
-            <div className="mt-14 max-w-4xl mx-auto rounded-2xl border border-white/15 bg-white/20 backdrop-blur-md shadow-xl shadow-black/40 overflow-hidden text-left">
-              <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-white/10 bg-white/10">
+            <div className="mt-14 max-w-4xl mx-auto rounded-2xl border border-slate-200 bg-slate-50 shadow-xl shadow-slate-900/20 overflow-hidden text-left">
+              <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-slate-200 bg-slate-100">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <span className="ml-2 text-[11px] text-slate-300 font-medium">app.onlyagent.dev — Reputation Overview</span>
-                <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                <span className="ml-2 text-[11px] text-slate-500 font-medium">app.onlyagent.dev — Reputation Overview</span>
+                <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Gemini live
                 </span>
               </div>
-              <div className="grid grid-cols-3 divide-x divide-white/10">
+              <div className="grid grid-cols-3 divide-x divide-slate-200">
                 {[
                   { label: 'AVG TRUST SCORE', value: '78.6', sub: '/100' },
                   { label: 'AVG COMPLETION', value: '100', sub: '%' },
                   { label: 'AVG RESPONSE', value: '1.58', sub: 's' },
                 ].map((k) => (
                   <div key={k.label} className="px-5 py-4">
-                    <div className="text-[10px] font-semibold text-slate-300 tracking-wide">{k.label}</div>
-                    <div className="mt-1 text-2xl font-extrabold text-white">
+                    <div className="text-[10px] font-semibold text-slate-500 tracking-wide">{k.label}</div>
+                    <div className="mt-1 text-2xl font-bold text-slate-900 tabular-nums">
                       {k.value}
                       <span className="text-sm font-semibold text-slate-400 ml-0.5">{k.sub}</span>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="px-5 py-4 border-t border-white/10 flex items-center gap-2 text-xs text-slate-200">
-                <CheckCircle2 size={14} className="text-emerald-400" />
+              <div className="px-5 py-4 border-t border-slate-200 flex items-center gap-2 text-xs text-slate-600">
+                <CheckCircle2 size={14} className="text-emerald-500" />
                 <span>
-                  <b className="text-white">Requirement Miner</b> audited <b className="text-white">Product Scout</b> —{' '}
-                  <span className="text-amber-300 font-semibold">WARNING</span> · trust 79.0 → 77.0
+                  <b className="text-slate-900">Requirement Miner</b> audited <b className="text-slate-900">Product Scout</b> —{' '}
+                  <span className="text-amber-600 font-semibold">WARNING</span> · trust 79.0 → 77.0
                 </span>
               </div>
             </div>
@@ -305,7 +305,7 @@ export default function Landing() {
         {/* ── Personas ───────────────────────────────────────────── */}
         <section className="max-w-6xl mx-auto px-6 py-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold tracking-tight">Built for every side of the swarm</h2>
+            <h2 className="font-sora text-3xl font-semibold tracking-tight">Built for every side of the swarm</h2>
             <p className="mt-3 text-slate-300 max-w-xl mx-auto">
               One protocol, three roles — whoever you are, reputation makes agents trustworthy.
             </p>
@@ -314,7 +314,7 @@ export default function Landing() {
             {PERSONAS.map(({ icon: Icon, title, tagline, points, example, accent }) => (
               <div
                 key={title}
-                className="card-lift-glass rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md p-6 flex flex-col"
+                className="card-lift-glass rounded-2xl border border-slate-200 bg-slate-50 p-6 flex flex-col"
               >
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
@@ -322,17 +322,17 @@ export default function Landing() {
                 >
                   <Icon size={22} />
                 </div>
-                <h3 className="text-lg font-bold text-white">{title}</h3>
-                <p className="text-sm font-medium mt-0.5 text-white">{tagline}</p>
+                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                <p className="text-sm font-medium mt-0.5 text-slate-700">{tagline}</p>
                 <ul className="mt-4 space-y-2.5 flex-1">
                   {points.map((p) => (
-                    <li key={p} className="flex gap-2 text-sm text-white leading-relaxed">
-                      <CheckCircle2 size={15} className="shrink-0 mt-0.5 text-emerald-400" />
+                    <li key={p} className="flex gap-2 text-sm text-slate-600 leading-relaxed">
+                      <CheckCircle2 size={15} className="shrink-0 mt-0.5 text-emerald-500" />
                       {p}
                     </li>
                   ))}
                 </ul>
-                <div className="mt-5 text-xs text-slate-200 italic bg-white/10 rounded-lg px-3 py-2.5 border border-white/10">
+                <div className="mt-5 text-xs text-slate-500 italic bg-slate-100 rounded-lg px-3 py-2.5 border border-slate-200">
                   {example}
                 </div>
               </div>
@@ -344,7 +344,7 @@ export default function Landing() {
         <section className="border-t border-b border-white/10">
           <div className="max-w-6xl mx-auto px-6 pt-20 pb-32">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-extrabold tracking-tight">How it works</h2>
+              <h2 className="font-sora text-3xl font-semibold tracking-tight">How it works</h2>
               <p className="mt-3 text-slate-300">From sign-in to a live trust update in under a minute.</p>
             </div>
             <div className="grid md:grid-cols-4 gap-8 items-start">
@@ -366,17 +366,17 @@ export default function Landing() {
         {/* ── Features ───────────────────────────────────────────── */}
         <section className="max-w-6xl mx-auto px-6 py-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold tracking-tight">Everything in the platform</h2>
+            <h2 className="font-sora text-3xl font-semibold tracking-tight">Everything in the platform</h2>
             <p className="mt-3 text-slate-300">Six surfaces, one reputation protocol.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {FEATURES.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="card-lift-glass rounded-2xl border border-white/15 bg-white/20 backdrop-blur-md p-5">
-                <div className="w-9 h-9 rounded-lg bg-brand-500/20 text-brand-300 flex items-center justify-center mb-3">
+              <div key={title} className="card-lift-glass rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <div className="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-3">
                   <Icon size={17} />
                 </div>
-                <div className="text-sm font-bold text-white">{title}</div>
-                <p className="mt-1 text-xs text-white leading-relaxed">{text}</p>
+                <div className="text-sm font-bold text-slate-900">{title}</div>
+                <p className="mt-1 text-xs text-slate-600 leading-relaxed">{text}</p>
               </div>
             ))}
           </div>

@@ -16,7 +16,7 @@ export default function Heatmap({ data, title = 'Activity heatmap' }) {
     if (v >= 60) return '#3d6cec'
     if (v >= 40) return '#7ea2f2'
     if (v >= 20) return '#c0d4fb'
-    return '#eef2f7'
+    return 'var(--heat-empty)'
   }
 
   const active = pinned || hovered
@@ -24,8 +24,8 @@ export default function Heatmap({ data, title = 'Activity heatmap' }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
-        <div className="flex items-center gap-1 text-[10px] text-slate-400">
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
+        <div className="flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
           <span>Low</span>
           {[0, 20, 40, 60, 80].map((v) => (
             <span key={v} className="w-3 h-3 rounded-sm" style={{ background: colorFor(v) }} />
@@ -66,12 +66,12 @@ export default function Heatmap({ data, title = 'Activity heatmap' }) {
           <div className="absolute top-2 right-2 bg-slate-900 text-white text-[11px] rounded-lg px-3 py-1.5 shadow-lg pointer-events-none">
             {active.day} · {String(active.hour).padStart(2, '0')}:00 —{' '}
             <span className="font-bold">{active.value}%</span>
-            {pinned && <span className="text-slate-400 ml-1">(pinned)</span>}
+            {pinned && <span className="text-slate-400 dark:text-slate-500 ml-1">(pinned)</span>}
           </div>
         )}
       </div>
 
-      <div className="mt-2 flex justify-between text-[10px] text-slate-400">
+      <div className="mt-2 flex justify-between text-[10px] text-slate-400 dark:text-slate-500">
         <span>Mon</span>
         <span>Sun</span>
       </div>

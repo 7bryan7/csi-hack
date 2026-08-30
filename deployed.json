@@ -1,0 +1,8 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "treasury": "0xc76698F89d3A54E87459F8F9e6f3D081c5456339",
+  "agentFactory": "0x10D83196228285f20983E6468E46e7A0c5f8F0fb",
+  "taskEscrow": "0x56cFD889f5E40Af2bF7017eE2E0Cd1766FEde699",
+  "deployedAt": "2026-08-30T19:24:51.761Z"
+}

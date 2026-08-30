@@ -39,8 +39,8 @@ export default function Audits() {
   return (
     <div className="max-w-[1200px] mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Audit Ledger</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="font-sora text-2xl font-bold text-slate-900 dark:text-slate-100">Audit Ledger</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Peer-to-peer audit trail — every verdict feeds the reputation protocol.
         </p>
       </div>
@@ -53,8 +53,8 @@ export default function Audits() {
             <button
               key={k}
               onClick={() => setVerdict(verdict === k ? 'all' : k)}
-              className={`card-lift bg-white rounded-2xl border-2 p-4 text-left transition-colors ${
-                verdict === k ? 'border-brand-500' : 'border-slate-200'
+              className={`card-lift bg-white dark:bg-slate-900 rounded-2xl border-2 p-4 text-left transition-colors ${
+                verdict === k ? 'border-brand-500' : 'border-slate-200 dark:border-slate-800'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -63,50 +63,50 @@ export default function Audits() {
                   {m.label}
                 </span>
               </div>
-              <div className="mt-1.5 text-2xl font-bold text-slate-900 tabular-nums">{counts[k]}</div>
-              <div className="text-[10px] text-slate-400">last 24 hours</div>
+              <div className="mt-1.5 text-2xl font-bold text-slate-900 dark:text-slate-100 tabular-nums">{counts[k]}</div>
+              <div className="text-[10px] text-slate-400 dark:text-slate-500">last 24 hours</div>
             </button>
           )
         })}
       </div>
 
       {/* Filter */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-3">
-        <Filter size={15} className="text-slate-400" />
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 flex items-center gap-3">
+        <Filter size={15} className="text-slate-400 dark:text-slate-500" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by agent, auditor, or note…"
-          className="flex-1 px-3 py-2 rounded-lg bg-slate-100 border border-transparent focus:bg-white focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
+          className="flex-1 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-brand-300 dark:focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-500/20 outline-none text-sm"
         />
-        <span className="text-xs text-slate-400">{filtered.length} events</span>
+        <span className="text-xs text-slate-400 dark:text-slate-500">{filtered.length} events</span>
       </div>
 
       {/* Ledger */}
-      <div className="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
         {filtered.map((ev) => {
           const m = VERDICT_META[ev.verdict]
           const Icon = m.icon
           return (
-            <div key={ev.id} className="p-4 flex gap-4 hover:bg-slate-50/60 transition-colors">
+            <div key={ev.id} className="p-4 flex gap-4 hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition-colors">
               <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: m.bg }}>
                 <Icon size={18} style={{ color: m.color }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
-                  <Link to={`/app/agents/${ev.auditor.id}`} className="font-semibold text-slate-800 hover:text-brand-600">
+                  <Link to={`/app/agents/${ev.auditor.id}`} className="font-semibold text-slate-800 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400">
                     {ev.auditor.name}
                   </Link>
-                  <span className="text-slate-400">audited</span>
-                  <Link to={`/app/agents/${ev.agent.id}`} className="font-semibold text-slate-800 hover:text-brand-600">
+                  <span className="text-slate-400 dark:text-slate-500">audited</span>
+                  <Link to={`/app/agents/${ev.agent.id}`} className="font-semibold text-slate-800 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400">
                     {ev.agent.name}
                   </Link>
                   <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style={{ color: m.color, background: m.bg }}>
                     {m.label}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-500 leading-relaxed">{ev.note}</p>
-                <div className="mt-1.5 flex items-center gap-3 text-[10px] text-slate-400">
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{ev.note}</p>
+                <div className="mt-1.5 flex items-center gap-3 text-[10px] text-slate-400 dark:text-slate-500">
                   <span>{ev.ts}</span>
                   <span className="inline-flex items-center gap-1">
                     <ShieldCheck size={11} />
@@ -118,7 +118,7 @@ export default function Audits() {
           )
         })}
         {filtered.length === 0 && (
-          <div className="p-12 text-center text-sm text-slate-400">No audit events match.</div>
+          <div className="p-12 text-center text-sm text-slate-400 dark:text-slate-500">No audit events match.</div>
         )}
       </div>
     </div>

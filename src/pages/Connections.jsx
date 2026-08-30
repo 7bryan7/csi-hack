@@ -39,12 +39,12 @@ function Toggle({ on, onChange, label, hint }) {
   return (
     <div className="flex items-start justify-between gap-4 py-3">
       <div>
-        <div className="text-sm font-semibold text-slate-800">{label}</div>
-        {hint && <div className="text-xs text-slate-400 mt-0.5">{hint}</div>}
+        <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{label}</div>
+        {hint && <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{hint}</div>}
       </div>
       <button
         onClick={() => onChange(!on)}
-        className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${on ? 'bg-brand-600' : 'bg-slate-200'}`}
+        className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${on ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'}`}
       >
         <span
           className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`}
@@ -57,15 +57,15 @@ function Toggle({ on, onChange, label, hint }) {
 function Field({ label, hint, children }) {
   return (
     <div className="py-3">
-      <div className="text-sm font-semibold text-slate-800">{label}</div>
-      {hint && <div className="text-xs text-slate-400 mt-0.5 mb-2">{hint}</div>}
+      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{label}</div>
+      {hint && <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 mb-2">{hint}</div>}
       {children}
     </div>
   )
 }
 
 const selectCls =
-  'w-full px-3 py-2 rounded-lg bg-slate-100 border border-transparent focus:bg-white focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none text-sm'
+  'w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-transparent focus:bg-white dark:focus:bg-slate-900 focus:border-brand-300 dark:focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-500/20 outline-none text-sm'
 
 export default function Connections() {
   const [conns, setConns] = useState(() => {
@@ -105,22 +105,22 @@ export default function Connections() {
     <div className="max-w-4xl space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-slate-900">AI Models & Agent Config</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="font-sora text-xl font-bold text-slate-900 dark:text-slate-100">AI Models & Agent Config</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Connect your own model API keys and tune how your agents run, get audited and stay discoverable.
         </p>
       </div>
 
       {/* Model connections */}
-      <section className="bg-white rounded-2xl border border-slate-200 p-5">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
         <div className="flex items-center gap-2 mb-1">
-          <KeyRound size={16} className="text-brand-600" />
-          <h2 className="text-sm font-bold text-slate-800">Model connections</h2>
-          <span className="ml-auto text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+          <KeyRound size={16} className="text-brand-600 dark:text-brand-400" />
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Model connections</h2>
+          <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">
             {connectedCount} connected
           </span>
         </div>
-        <p className="text-xs text-slate-500 mb-4">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
           Bring your own key (BYOK) — tasks you submit run on your quota. Keys are stored locally in your browser.
         </p>
 
@@ -132,7 +132,7 @@ export default function Connections() {
               <div
                 key={p.id}
                 className={`rounded-xl border p-4 transition-colors ${
-                  c.connected ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200'
+                  c.connected ? 'border-emerald-200 bg-emerald-50/40' : 'border-slate-200 dark:border-slate-800'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -143,15 +143,15 @@ export default function Connections() {
                     {p.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-bold text-slate-800">{p.name}</div>
-                    <div className="text-[11px] text-slate-400 truncate">{p.desc}</div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{p.name}</div>
+                    <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{p.desc}</div>
                   </div>
                   {c.connected ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/20 px-2 py-0.5 rounded-full shrink-0">
                       <CheckCircle2 size={11} /> Connected
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full shrink-0">
                       Not connected
                     </span>
                   )}
@@ -164,11 +164,11 @@ export default function Connections() {
                       value={c.key}
                       onChange={(e) => setConn(p.id, { key: e.target.value })}
                       placeholder={p.placeholder}
-                      className="w-full pl-3 pr-9 py-2 rounded-lg bg-white border border-slate-200 focus:border-brand-300 focus:ring-2 focus:ring-brand-100 outline-none text-sm"
+                      className="w-full pl-3 pr-9 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:border-brand-300 dark:focus:border-brand-500 focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-500/20 outline-none text-sm"
                     />
                     <button
                       onClick={() => setShowKeys((s) => ({ ...s, [p.id]: !s[p.id] }))}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200"
                       title={show ? 'Hide key' : 'Show key'}
                     >
                       {show ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -178,7 +178,7 @@ export default function Connections() {
                     onClick={() => setConn(p.id, { connected: !c.connected })}
                     className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors shrink-0 ${
                       c.connected
-                        ? 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                        ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                         : 'bg-brand-600 text-white hover:bg-brand-700'
                     }`}
                   >
@@ -193,13 +193,13 @@ export default function Connections() {
       </section>
 
       {/* Agent runtime */}
-      <section className="bg-white rounded-2xl border border-slate-200 p-5">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <SlidersHorizontal size={16} className="text-brand-600" />
-          <h2 className="text-sm font-bold text-slate-800">Agent runtime</h2>
+          <SlidersHorizontal size={16} className="text-brand-600 dark:text-brand-400" />
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Agent runtime</h2>
         </div>
 
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
           <Field label="Routing strategy" hint="How the orchestrator picks an agent for each task.">
             <select value={cfg.routing} onChange={(e) => setCfgField('routing', e.target.value)} className={selectCls}>
               <option value="trust">Trust-first — highest reputation wins</option>
@@ -256,16 +256,16 @@ export default function Connections() {
       </section>
 
       {/* Developer & operator */}
-      <section className="bg-white rounded-2xl border border-slate-200 p-5">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
         <div className="flex items-center gap-2 mb-2">
-          <Rocket size={16} className="text-brand-600" />
-          <h2 className="text-sm font-bold text-slate-800">Developer & operator</h2>
+          <Rocket size={16} className="text-brand-600 dark:text-brand-400" />
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Developer & operator</h2>
         </div>
-        <p className="text-xs text-slate-500 mb-2">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
           Controls for agent developers publishing to the marketplace and swarm operators governing fleets.
         </p>
 
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
           <Toggle
             on={cfg.publish}
             onChange={(v) => setCfgField('publish', v)}
@@ -307,14 +307,14 @@ export default function Connections() {
                 onChange={(e) => setCfgField('trustAlert', Number(e.target.value))}
                 className="flex-1 accent-brand-600"
               />
-              <span className="text-sm font-bold text-slate-700 w-10 text-right">{cfg.trustAlert}</span>
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-300 w-10 text-right">{cfg.trustAlert}</span>
             </div>
           </Field>
         </div>
       </section>
 
       {/* Info note */}
-      <div className="flex items-start gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-4 py-3 text-xs text-brand-800">
+      <div className="flex items-start gap-2.5 rounded-xl bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/30 px-4 py-3 text-xs dark:text-brand-300">
         <Info size={14} className="shrink-0 mt-0.5" />
         <p>
           This page is a UI preview — connections and settings are stored locally in your browser and are not yet
