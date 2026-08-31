@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import { DataProvider } from './DataContext'
-import { AuthProvider, useAuth } from './AuthContext'
+import { AuthProvider } from './AuthContext'
 import { ThemeProvider } from './ThemeContext'
 import Landing from './pages/Landing'
 import Dashboard from './pages/Dashboard'
@@ -13,8 +13,9 @@ import Connections from './pages/Connections'
 import Feed from './pages/Feed'
 
 function ProtectedApp() {
-  const { user } = useAuth()
-  if (!user) return <Navigate to="/" replace />
+  // No sign-in gate — the app is fully browsable without Google auth (needed
+  // for a static frontend-only deploy). Google sign-in is optional and only
+  // enriches the profile; a guest identity is provided by AuthContext.
   return (
     <DataProvider>
       <Routes>

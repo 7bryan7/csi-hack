@@ -4,8 +4,6 @@ import {
   Briefcase, Code2, Network, ShieldCheck, Store, Zap, ArrowRight,
   LayoutDashboard, Activity, CheckCircle2, Users, Sparkles,
 } from 'lucide-react'
-import { useAuth } from '../AuthContext'
-import GlassGoogleButton from '../components/GlassGoogleButton'
 import CursorReveal from '../components/CursorReveal'
 
 const PERSONAS = [
@@ -48,7 +46,7 @@ const PERSONAS = [
 ]
 
 const STEPS = [
-  { icon: Users, title: 'Sign in with Google', text: 'One click — no passwords, no setup.' },
+  { icon: Users, title: 'Open the app', text: 'No sign-in, no setup — jump straight into the marketplace.' },
   { icon: Store, title: 'Browse or submit', text: 'Explore the marketplace or describe a task for the swarm.' },
   { icon: Zap, title: 'Smart routing', text: 'The orchestrator picks the highest-trust agent for the job.' },
   { icon: ShieldCheck, title: 'Peer audit', text: 'A peer agent reviews the output — trust updates in real time.' },
@@ -130,8 +128,6 @@ function StepCard({ icon: Icon, title, text, step, hasArrow, offsetClass = '' })
 }
 
 export default function Landing() {
-  const { user } = useAuth()
-  const getStartedRef = useRef(null)
   const [scrolled, setScrolled] = useState(false)
 
   // Navbar morphs into a floating glass pill once the page is scrolled.
@@ -141,29 +137,6 @@ export default function Landing() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-
-  // GET STARTED animations only play while the cursor is within the
-  // 250px reveal range of the button (keeps the page calm otherwise).
-  useEffect(() => {
-    const btn = getStartedRef.current
-    if (!btn) return
-    let rect = btn.getBoundingClientRect()
-    const refresh = () => { rect = btn.getBoundingClientRect() }
-    const onMove = (e) => {
-      const cx = rect.left + rect.width / 2
-      const cy = rect.top + rect.height / 2
-      const d = Math.hypot(e.clientX - cx, e.clientY - cy)
-      btn.classList.toggle('btn-active', d <= 250)
-    }
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('scroll', refresh, true)
-    window.addEventListener('resize', refresh)
-    return () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('scroll', refresh, true)
-      window.removeEventListener('resize', refresh)
-    }
-  }, [user])
 
   return (
     <div className="relative min-h-full text-white cursor-none">
@@ -209,20 +182,12 @@ export default function Landing() {
               <div className="text-[10px] text-white/70 font-medium tracking-wide uppercase">Reputation Engine</div>
             </div>
             <div className="ml-auto flex items-center gap-3">
-              {user ? (
-                <Link
-                  to="/app"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-brand-700 text-sm font-semibold hover:bg-white/90 transition-colors"
-                >
-                  Open dashboard <ArrowRight size={15} />
-                </Link>
-              ) : (
-                <GlassGoogleButton
-                  label="Sign in with Google"
-                  width={220}
-                  buttonClassName="px-5 py-2.5 text-sm border border-white/25 bg-white/20 backdrop-blur-md text-white hover:bg-white/30 transition-colors"
-                />
-              )}
+              <Link
+                to="/app"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-brand-700 text-sm font-semibold hover:bg-white/90 transition-colors"
+              >
+                Open dashboard <ArrowRight size={15} />
+              </Link>
             </div>
           </div>
         </header>
@@ -244,25 +209,13 @@ export default function Landing() {
               agents are peer-audited, ranked by verified reputation, and discovered on merit.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3">
-              {user ? (
-                <Link
-                  to="/app"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-brand-600 text-white font-semibold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/20"
-                >
-                  Open the app <ArrowRight size={17} />
-                </Link>
-              ) : (
-                <>
-                  <GlassGoogleButton
-                    label="GET STARTED"
-                    width={280}
-                    showGoogleIcon={false}
-                    buttonRef={getStartedRef}
-                    buttonClassName="btn-awwwards px-9 py-4 text-sm tracking-[0.2em] text-white"
-                  />
-                  <p className="text-xs text-slate-400">Free to explore — no credit card, no API key needed</p>
-                </>
-              )}
+              <Link
+                to="/app"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-brand-600 text-white font-semibold hover:bg-brand-700 transition-colors shadow-lg shadow-brand-600/20"
+              >
+                Open the app <ArrowRight size={17} />
+              </Link>
+              <p className="text-xs text-slate-400">Free to explore — no sign-in, no API key needed</p>
             </div>
 
             {/* Mock dashboard strip */}
@@ -345,7 +298,7 @@ export default function Landing() {
           <div className="max-w-6xl mx-auto px-6 pt-20 pb-32">
             <div className="text-center mb-12">
               <h2 className="font-sora text-3xl font-semibold tracking-tight">How it works</h2>
-              <p className="mt-3 text-slate-300">From sign-in to a live trust update in under a minute.</p>
+              <p className="mt-3 text-slate-300">From opening the app to a live trust update in under a minute.</p>
             </div>
             <div className="grid md:grid-cols-4 gap-8 items-start">
               {STEPS.map(({ icon, title, text }, i) => (

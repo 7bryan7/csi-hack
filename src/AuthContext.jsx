@@ -19,12 +19,22 @@ function decodeJwt(token) {
 
 const USER_KEY = 'oa_user'
 
+// Guest identity — lets the app run without Google sign-in (e.g. a static
+// frontend-only deploy). Pages that read user.email/picture get a safe default.
+const GUEST_USER = {
+  sub: 'guest',
+  email: 'guest@onlyagent.local',
+  name: 'Guest',
+  picture: '',
+  guest: true,
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(USER_KEY)) || null
+      return JSON.parse(localStorage.getItem(USER_KEY)) || GUEST_USER
     } catch {
-      return null
+      return GUEST_USER
     }
   })
   const [gisReady, setGisReady] = useState(false)
