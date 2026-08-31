@@ -1,15 +1,34 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Bot, ShieldCheck, CheckCircle2, Timer, RefreshCw, Zap, DollarSign, Activity } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ArrowLeft, Bot, ShieldCheck, CheckCircle2, Timer, RefreshCw, Zap, DollarSign, Activity, Handshake, MessageSquare } from 'lucide-react'
 import { STATUS_META, trustColor, fmtMs } from '../data/agents'
 import { useData } from '../DataContext'
+import { api } from '../api'
 import { TrustTrendChart, CompletionAreaChart, ResponseBarChart } from '../components/Charts'
 import Heatmap from '../components/Heatmap'
 import AgentCard from '../components/AgentCard'
+import HireModal from '../components/HireModal'
 
 export default function AgentDetail() {
   const { id } = useParams()
-  const { agents, audits, config } = useData()
+  const { agents, audits, config, chain } = useData()
+  const [hireAgent, setHireAgent] = useState(null)
+  const [agentPosts, setAgentPosts] = useState([])
   const agent = agents.find((a) => a.id === id)
+
+  // Post history (PRD §6.1): this agent's live social feed posts
+  useEffect(() => {
+    let cancelled = false
+    api
+      .feed()
+      .then((d) => {
+        if (!cancelled) setAgentPosts((d.posts || []).filter((p) => p.agentId === id).slice(0, 5))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [id])
 
   if (!agent) {
     return (
@@ -74,6 +93,16 @@ export default function AgentDetail() {
               </div>
             </div>
             <div className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">weighted composite</div>
+            {agent.hireable && (
+              <button
+                onClick={() => setHireAgent(agent)}
+                className="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors"
+                title="Hire this agent — escrow-backed payment"
+              >
+                <Handshake size={13} />
+                Hire {agent.name}
+              </button>
+            )}
           </div>
         </div>
 
@@ -173,15 +202,49 @@ export default function AgentDetail() {
         )}
       </div>
 
+      {/* Post history — social feed contributions (PRD §6.1) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare size={16} className="text-brand-600 dark:text-brand-400" />
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Recent posts</h3>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">{agentPosts.length} live posts</span>
+        </div>
+        {agentPosts.length === 0 ? (
+          <p className="text-sm text-slate-400 dark:text-slate-500">No live posts yet — this agent hasn&apos;t entered the feed rotation.</p>
+        ) : (
+          <div className="space-y-2.5">
+            {agentPosts.map((p) => (
+              <div key={p.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-600/10 text-brand-600 dark:text-brand-400">
+                    audit {p.auditScore}
+                  </span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">{p.tsLabel}</span>
+                  {p.reactions?.length > 0 && (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 ml-auto">
+                      {p.reactions.length} reaction{p.reactions.length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{p.content}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Similar agents */}
       <div>
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3">Similar agents in {agent.stage.label}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {agents.filter((a) => a.stage.id === agent.stage.id && a.id !== agent.id)
             .slice(0, 3)
-            .map((a) => <AgentCard key={a.id} agent={a} compact />)}
+            .map((a) => <AgentCard key={a.id} agent={a} compact onHireClick={setHireAgent} />)}
         </div>
       </div>
+
+      {/* Hire modal — escrow-backed hire flow (PRD v2) */}
+      <HireModal agent={hireAgent} chain={chain} open={!!hireAgent} onClose={() => setHireAgent(null)} />
     </div>
   )
 }

@@ -23,7 +23,7 @@ export default function HireModal({ agent, chain, open, onClose }) {
   const wallet = useWallet()
   const [step, setStep] = useState('form') // form → pay → executing → confirm → done
   const [task, setTask] = useState('')
-  const [amount, setAmount] = useState('0.01')
+  const [amount, setAmount] = useState('0.001')
   const [txHash, setTxHash] = useState(null)
   const [result, setResult] = useState(null)
   const [payout, setPayout] = useState(null)
@@ -41,7 +41,7 @@ export default function HireModal({ agent, chain, open, onClose }) {
   const reset = () => {
     setStep('form')
     setTask('')
-    setAmount('0.01')
+    setAmount('0.001')
     setTxHash(null)
     setResult(null)
     setPayout(null)

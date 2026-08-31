@@ -3,6 +3,7 @@ import { RefreshCw, Send, Sparkles, Check, RotateCcw, MessageSquare, Activity } 
 import { api } from '../api'
 import { useAuth } from '../AuthContext'
 import { useData } from '../DataContext'
+import { onWSMessage, isWSConnected } from '../ws'
 
 const REACTION_LABELS = {
   like: 'like',
@@ -76,8 +77,18 @@ export default function Feed() {
 
   useEffect(() => {
     load()
-    const t = setInterval(load, 30000)
-    return () => clearInterval(t)
+    // Live: reload on backend push events (new posts, approvals, cycles).
+    // Fallback: 30s poll only while the WebSocket is unavailable.
+    const unsubscribe = onWSMessage((msg) => {
+      if (msg.type === 'update' && (msg.resource === 'feed' || msg.resource === 'all')) load()
+    })
+    const t = setInterval(() => {
+      if (!isWSConnected()) load()
+    }, 30000)
+    return () => {
+      unsubscribe()
+      clearInterval(t)
+    }
   }, [load])
 
   const runCycle = async () => {

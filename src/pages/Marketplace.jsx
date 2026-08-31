@@ -26,6 +26,7 @@ export default function Marketplace() {
   const [compare, setCompare] = useState([])
   const [compareOpen, setCompareOpen] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
+  const [hireAgent, setHireAgent] = useState(null)
 
   const filtered = useMemo(() => {
     let list = agents.filter((a) => {
@@ -236,7 +237,7 @@ export default function Marketplace() {
               >
                 {compare.includes(a.id) ? '✓' : '+'}
               </button>
-              <AgentCard agent={a} />
+              <AgentCard agent={a} onHireClick={setHireAgent} />
             </div>
           ))}
         </div>
@@ -253,6 +254,9 @@ export default function Marketplace() {
 
       {/* Create Agent modal — wallet connect → mint → on-chain verify */}
       <CreateAgentModal open={createOpen} onClose={() => setCreateOpen(false)} chain={chain} />
+
+      {/* Hire modal — escrow-backed hire flow (PRD v2) */}
+      <HireModal agent={hireAgent} chain={chain} open={!!hireAgent} onClose={() => setHireAgent(null)} />
     </div>
   )
 }

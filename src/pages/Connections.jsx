@@ -2,7 +2,13 @@ import { useState, useEffect } from 'react'
 import {
   KeyRound, Plug, PlugZap,
   SlidersHorizontal, Rocket, CheckCircle2, Eye, EyeOff, Info,
+  Landmark, Lock, RefreshCw, Wallet, ShieldCheck,
 } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { api } from '../api'
+import { useData } from '../DataContext'
+import { useWallet } from '../hooks/useWallet'
+import { onWSMessage } from '../ws'
 
 // ---------------------------------------------------------------------------
 // UI-only page: model connections + agent/swarm operator configuration.
@@ -92,6 +98,43 @@ export default function Connections() {
     })
   )
   const [showKeys, setShowKeys] = useState({})
+  const { chain } = useData()
+  const wallet = useWallet()
+  const [treasury, setTreasury] = useState(null)
+  const [treasuryLoading, setTreasuryLoading] = useState(false)
+  const [treasuryError, setTreasuryError] = useState('')
+
+  const loadTreasury = async () => {
+    setTreasuryLoading(true)
+    setTreasuryError('')
+    try {
+      const res = await api.treasury()
+      setTreasury(res.treasury)
+    } catch (e) {
+      setTreasuryError(e.message || 'Failed to load treasury stats')
+    } finally {
+      setTreasuryLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (chain?.treasury) loadTreasury()
+  }, [chain?.treasury])
+
+  // Live: a hire/confirm settles escrow → refresh treasury stats on push.
+  useEffect(() => {
+    return onWSMessage((msg) => {
+      if (msg.type === 'update' && (msg.resource === 'tasks' || msg.resource === 'all')) loadTreasury()
+    })
+  }, [])
+
+  const isOperator = !!wallet.address && !!chain?.operator && wallet.address.toLowerCase() === chain.operator.toLowerCase()
+  const treasuryChartData = treasury
+    ? [
+        { name: 'Task fees', value: treasury.taskFeesEth, color: '#3d6cec' },
+        { name: 'Mint fees', value: treasury.mintFeesEth, color: '#8b5cf6' },
+      ]
+    : []
 
   useEffect(() => localStorage.setItem(CONN_KEY, JSON.stringify(conns)), [conns])
   useEffect(() => localStorage.setItem(CFG_KEY, JSON.stringify(cfg)), [cfg])
@@ -311,6 +354,125 @@ export default function Connections() {
             </div>
           </Field>
         </div>
+      </section>
+
+      {/* Platform treasury — operator-only (wallet == treasury address) */}
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Landmark size={16} className="text-brand-600 dark:text-brand-400" />
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Platform treasury</h2>
+          {isOperator ? (
+            <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              <ShieldCheck size={11} /> Operator
+            </span>
+          ) : (
+            <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+              <Lock size={11} /> Operator only
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          Cumulative platform revenue — 7% escrow fees from hires and 0.001 ETH mint fees, read directly from on-chain events.
+        </p>
+
+        {!isOperator ? (
+          <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-6 text-center">
+            <Lock size={22} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-300">Operator access required</div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto">
+              The treasury is owned by the platform operator wallet. Connect that wallet to view revenue.
+            </p>
+            <button
+              onClick={() => wallet.connect()}
+              disabled={wallet.connecting}
+              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white text-xs font-bold transition-colors"
+            >
+              {wallet.connecting ? <RefreshCw size={13} className="animate-spin" /> : <Wallet size={13} />}
+              {wallet.address ? 'Switch to operator wallet' : 'Connect wallet'}
+            </button>
+            {wallet.address && (
+              <div className="mt-2 text-[10px] text-slate-400 break-all">
+                Connected {wallet.address.slice(0, 8)}…{wallet.address.slice(-6)} — expected {chain?.operator?.slice(0, 8)}…
+              </div>
+            )}
+          </div>
+        ) : treasuryLoading && !treasury ? (
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-400">
+            <RefreshCw size={15} className="animate-spin" /> Reading on-chain events…
+          </div>
+        ) : treasuryError ? (
+          <div className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+            {treasuryError}
+          </div>
+        ) : treasury ? (
+          <>
+            {/* KPI cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4">
+                <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-semibold">Total collected</div>
+                <div className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100 tabular-nums">{treasury.totalEth.toFixed(4)} ETH</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">{treasury.tasksPaid + treasury.agentsMinted} on-chain events</div>
+              </div>
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4">
+                <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-semibold">Task fees (7%)</div>
+                <div className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100 tabular-nums">{treasury.taskFeesEth.toFixed(4)} ETH</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">{treasury.tasksPaid} tasks paid</div>
+              </div>
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4">
+                <div className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-semibold">Mint fees</div>
+                <div className="mt-1 text-xl font-bold text-slate-900 dark:text-slate-100 tabular-nums">{treasury.mintFeesEth.toFixed(4)} ETH</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">{treasury.agentsMinted} agents minted</div>
+              </div>
+            </div>
+
+            {/* Fee breakdown chart */}
+            <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Fee breakdown (ETH)</div>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={treasuryChartData} margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                  <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(148,163,184,0.08)' }}
+                    contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                    formatter={(v) => [`${Number(v).toFixed(4)} ETH`, '']}
+                  />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    {treasuryChartData.map((d) => (
+                      <Cell key={d.name} fill={d.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Contract addresses */}
+            <div className="mt-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 p-4 text-[11px] space-y-1.5">
+              <div className="flex justify-between gap-3 text-slate-500 dark:text-slate-400">
+                <span className="shrink-0">Treasury</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300 break-all">{chain?.treasury}</span>
+              </div>
+              <div className="flex justify-between gap-3 text-slate-500 dark:text-slate-400">
+                <span className="shrink-0">TaskEscrow</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300 break-all">{treasury.escrow}</span>
+              </div>
+              <div className="flex justify-between gap-3 text-slate-500 dark:text-slate-400">
+                <span className="shrink-0">AgentFactory</span>
+                <span className="font-mono text-slate-700 dark:text-slate-300 break-all">{treasury.factory}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={loadTreasury}
+              disabled={treasuryLoading}
+              className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+            >
+              <RefreshCw size={12} className={treasuryLoading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          </>
+        ) : null}
       </section>
 
       {/* Info note */}

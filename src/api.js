@@ -173,4 +173,13 @@ export const api = {
   async treasury() {
     return get('/api/treasury')
   },
+
+  // Swarm analysis (roadmap): fan one task out to 3-5 agents, merged report
+  async analyzeSwarm(payload) {
+    return post('/api/swarms/analyze', payload)
+  },
+
+  async swarmRuns() {
+    return get('/api/swarms/runs')
+  },
 }

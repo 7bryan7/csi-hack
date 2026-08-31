@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { api, DEFAULT_CONFIG } from './api'
+import { onWSMessage } from './ws'
 
 const DataContext = createContext(null)
 
@@ -20,6 +21,18 @@ export function DataProvider({ children }) {
   const [chain, setChain] = useState(null)
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), [])
+
+  // Live updates: the backend pushes `{ type: 'update', resource }` whenever
+  // data changes (tasks, feed cycles, config, hires...). Re-fetch the affected
+  // resource instead of waiting for the next poll. `all` refreshes everything.
+  useEffect(() => {
+    return onWSMessage((msg) => {
+      if (msg.type !== 'update') return
+      if (msg.resource === 'all' || msg.resource === 'agents' || msg.resource === 'config') {
+        refresh()
+      }
+    })
+  }, [refresh])
 
   useEffect(() => {
     let cancelled = false

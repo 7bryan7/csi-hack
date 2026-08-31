@@ -25,9 +25,12 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import { createServer } from 'node:http'
+import { WebSocketServer } from 'ws'
 import { fileURLToPath } from 'node:url'
 dotenv.config({ path: fileURLToPath(new URL('../.env', import.meta.url)) })
 import { AGENTS, LIFECYCLE_STAGES } from './agents.js'
+import { runSwarmAnalysis, recentSwarmRuns } from './swarm.js'
 import { store, nextId, warmup, loadStore, saveStore, getAgent, getAllAgents } from './store.js'
 import { buildAllAgents, buildAgent, buildSwarm, SWARMS, buildAuditEvent } from './metrics.js'
 import { runAgent, auditOutput, MODE } from './runtime.js'
@@ -47,6 +50,27 @@ app.use(cors())
 app.use(express.json())
 
 const PORT = process.env.PORT || 8787
+
+// ---------------------------------------------------------------------------
+// Live updates (roadmap: WebSocket instead of polling) — the backend pushes a
+// small `{ type, resource, ts }` event whenever data changes; clients re-fetch
+// the affected resource. No payloads over the wire — the REST API stays the
+// source of truth.
+// ---------------------------------------------------------------------------
+const server = createServer(app)
+const wss = new WebSocketServer({ server, path: '/ws' })
+
+wss.on('connection', (socket) => {
+  socket.send(JSON.stringify({ type: 'hello', ts: Date.now() }))
+  socket.on('error', () => {})
+})
+
+function broadcast(payload) {
+  const msg = JSON.stringify({ ...payload, ts: Date.now() })
+  for (const client of wss.clients) {
+    if (client.readyState === 1) client.send(msg)
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -86,6 +110,7 @@ app.get('/api/chain', (req, res) => {
     agentFactory: AGENT_FACTORY_ADDRESS,
     taskEscrow: TASK_ESCROW_ADDRESS,
     treasury: TREASURY_ADDRESS,
+    operator: process.env.OPERATOR_ADDRESS || '0x26839094202c7582DE5279eB61239B55C481Fe2d',
     mintFeeEth: '0.001',
     deployed: !!AGENT_FACTORY_ADDRESS,
   })
@@ -127,11 +152,39 @@ app.put('/api/config', (req, res) => {
     store.config.hireThreshold = Math.round(clamp(body.hireThreshold, 0, 100))
   }
   saveStore()
+  broadcast({ type: 'update', resource: 'config' })
   res.json({ config: store.config })
 })
 
 app.get('/api/swarms', (req, res) => {
   res.json({ swarms: SWARMS.map(buildSwarm) })
+})
+
+// ---------------------------------------------------------------------------
+// Swarm analysis (roadmap): fan one task out to 3-5 agents in parallel and
+// return a merged report. Each contributor's execution is recorded, so the
+// fan-out also feeds reputation metrics.
+// ---------------------------------------------------------------------------
+app.post('/api/swarms/analyze', async (req, res) => {
+  const { task, agentIds, count } = req.body || {}
+  if (!task || typeof task !== 'string' || !task.trim()) {
+    return res.status(400).json({ error: 'task is required' })
+  }
+  if (task.trim().length > 500) {
+    return res.status(400).json({ error: 'task must be 500 characters or fewer' })
+  }
+  try {
+    const run = await runSwarmAnalysis({ task: task.trim(), agentIds, count })
+    broadcast({ type: 'update', resource: 'all' })
+    res.json({ run })
+  } catch (e) {
+    console.error('[swarm] analysis failed:', e.message)
+    res.status(500).json({ error: `Swarm analysis failed: ${e.message}` })
+  }
+})
+
+app.get('/api/swarms/runs', (req, res) => {
+  res.json({ runs: recentSwarmRuns() })
 })
 
 // ---------------------------------------------------------------------------
@@ -162,8 +215,8 @@ app.get('/api/profile', (req, res) => {
   if (!email) return res.status(400).json({ error: 'email query param is required' })
   const user = store.users.find((u) => u.id === email)
   if (!user) return res.status(404).json({ error: 'Profile not found' })
-  // Owned agents: custom agents minted by this user (Phase 2 populates these)
-  const ownedAgentIds = []
+  // Owned agents: custom agents minted by this user (PRD §4.1)
+  const ownedAgentIds = store.agents.filter((a) => a.ownerId === email).map((a) => a.id)
   res.json({ profile: { ...user, ownedAgentIds } })
 })
 
@@ -171,7 +224,8 @@ app.put('/api/profile', (req, res) => {
   const { email, name, picture, walletAddress } = req.body || {}
   const user = upsertProfile({ email, name, picture, walletAddress })
   if (!user) return res.status(400).json({ error: 'email is required' })
-  res.json({ profile: { ...user, ownedAgentIds: [] } })
+  const ownedAgentIds = store.agents.filter((a) => a.ownerId === email).map((a) => a.id)
+  res.json({ profile: { ...user, ownedAgentIds } })
 })
 
 // ---------------------------------------------------------------------------
@@ -230,6 +284,7 @@ app.post('/api/agents/custom', async (req, res) => {
   // Link the agent to the owner's profile
   if (email) upsertProfile({ email, walletAddress })
 
+  broadcast({ type: 'update', resource: 'agents' })
   res.status(201).json({ agent: buildAgent(agent), verified: { tokenId: String(verified.tokenId) }, mode: MODE })
 })
 
@@ -301,6 +356,7 @@ app.post('/api/feed/posts/:id/approve', (req, res) => {
   if (post.status !== 'pending') return res.status(400).json({ error: 'Post is not pending' })
   post.status = 'live'
   saveStore()
+  broadcast({ type: 'update', resource: 'feed' })
   res.json({ post: buildFeedPost(post) })
 })
 
@@ -317,6 +373,7 @@ app.post('/api/feed/posts/:id/regenerate', async (req, res) => {
   post.auditScore = audit.score
   post.audit = audit.axes
   saveStore()
+  broadcast({ type: 'update', resource: 'feed' })
   res.json({ post: buildFeedPost(post) })
 })
 
@@ -324,6 +381,7 @@ app.post('/api/feed/posts/:id/regenerate', async (req, res) => {
 app.post('/api/feed/cycle', async (req, res) => {
   const count = Math.min(Number(req.body?.count) || 3, 6)
   const results = await runFeedCycle({ count })
+  broadcast({ type: 'update', resource: 'feed' })
   res.json({ results, status: feedStatus() })
 })
 
@@ -336,6 +394,7 @@ app.post('/api/feed/focus', (req, res) => {
   store.config.feedFocus[agentId] =
     typeof focus === 'string' && focus.trim() ? focus.trim().slice(0, 200) : null
   saveStore()
+  broadcast({ type: 'update', resource: 'feed' })
   res.json({ agentId, focus: store.config.feedFocus[agentId] })
 })
 
@@ -379,6 +438,7 @@ app.post('/api/tasks', async (req, res) => {
   store.tasks.push(taskRecord)
   saveStore()
 
+  broadcast({ type: 'update', resource: 'all' })
   res.json({
     task: taskRecord,
     execution: { ...execution, agent: buildAgent(agent), totalMs: Date.now() - started },
@@ -415,6 +475,7 @@ app.post('/api/tasks/:id/audit', async (req, res) => {
   store.audits.push(audit)
   saveStore()
 
+  broadcast({ type: 'update', resource: 'all' })
   res.json({ audit: buildAuditEvent(audit), updatedAgent: buildAgent(agent), mode: MODE })
 })
 
@@ -496,6 +557,7 @@ app.post('/api/tasks/hire', async (req, res) => {
   taskRecord.status = result.success ? 'completed' : 'failed'
   saveStore()
 
+  broadcast({ type: 'update', resource: 'tasks' })
   const fee = Math.round(amount * FEE_BPS) / 10000
   res.status(201).json({
     task: taskRecord,
@@ -537,6 +599,7 @@ app.post('/api/tasks/:id/confirm', async (req, res) => {
   task.paidAt = Date.now()
   saveStore()
 
+  broadcast({ type: 'update', resource: 'tasks' })
   const agent = getAgent(task.agentId)
   res.json({
     task,
@@ -568,7 +631,7 @@ function timeAgo(ts) {
   return `${Math.round(diff / 86400000)}d ago`
 }
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   const hasData = loadStore()
   console.log(`[onlyagent] backend on http://localhost:${PORT} (mode: ${MODE})`)
   if (hasData) {
@@ -582,7 +645,8 @@ app.listen(PORT, () => {
     )
   }
   // Social feed (PRD §4.4): seed once so the timeline is alive, then schedule.
-  startFeedScheduler()
+  // Scheduled cycles broadcast a `feed` update so connected clients refresh live.
+  startFeedScheduler(() => broadcast({ type: 'update', resource: 'feed' }))
   seedFeedIfEmpty()
     .then((r) => console.log(`[feed] seed: ${r.seeded ? `posted ${r.count} items` : r.reason}`))
     .catch((e) => console.error('[feed] seed failed:', e.message))

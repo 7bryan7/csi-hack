@@ -205,13 +205,42 @@ export async function verifyCompleteTask(txHash, expectedTaskId) {
 // events: TaskPaid + TaskReleased fees from TaskEscrow, plus mint fees from
 // AgentFactory (0.001 ETH per AgentMinted).
 // ---------------------------------------------------------------------------
+
+// Base Sepolia public RPC caps eth_getLogs at a 10,000-block range, and
+// prunes history before ~block 44.5M. The contracts were deployed 2026-08-30
+// and only *used* since then, so scanning the last 100k blocks (~2.3 days)
+// captures every real event while keeping the endpoint fast.
+const LOG_CHUNK = 10_000n
+const TREASURY_SCAN_WINDOW = 100_000n
+
+let treasuryCache = { at: 0, stats: null }
+const TREASURY_TTL_MS = 60_000
+
+async function getLogsPaged(address, event, fromBlock, toBlock) {
+  const endBlock = toBlock === 'latest' ? await publicClient.getBlockNumber() : toBlock
+  const logs = []
+  let cursor = fromBlock
+  while (cursor <= endBlock) {
+    const end = cursor + LOG_CHUNK - 1n < endBlock ? cursor + LOG_CHUNK - 1n : endBlock
+    const chunk = await publicClient.getLogs({ address, event, fromBlock: cursor, toBlock: end })
+    logs.push(...chunk)
+    cursor = end + 1n
+  }
+  return logs
+}
+
 export async function readTreasuryStats() {
+  if (treasuryCache.stats && Date.now() - treasuryCache.at < TREASURY_TTL_MS) {
+    return treasuryCache.stats
+  }
   const stats = { taskFeesEth: 0, mintFeesEth: 0, tasksPaid: 0, agentsMinted: 0, escrow: null, factory: null }
   try {
+    const latest = await publicClient.getBlockNumber()
+    const from = latest > TREASURY_SCAN_WINDOW ? latest - TREASURY_SCAN_WINDOW : 0n
     if (TASK_ESCROW_ADDRESS) {
       const [paidLogs, releasedLogs] = await Promise.all([
-        publicClient.getLogs({ address: TASK_ESCROW_ADDRESS, event: TASK_PAID, fromBlock: 0n, toBlock: 'latest' }),
-        publicClient.getLogs({ address: TASK_ESCROW_ADDRESS, event: TASK_RELEASED, fromBlock: 0n, toBlock: 'latest' }),
+        getLogsPaged(TASK_ESCROW_ADDRESS, TASK_PAID, from, latest),
+        getLogsPaged(TASK_ESCROW_ADDRESS, TASK_RELEASED, from, latest),
       ])
       const fees = [...paidLogs, ...releasedLogs].reduce((s, l) => s + l.args.fee, 0n)
       stats.taskFeesEth = Number(fees) / 1e18
@@ -219,12 +248,7 @@ export async function readTreasuryStats() {
       stats.escrow = TASK_ESCROW_ADDRESS
     }
     if (AGENT_FACTORY_ADDRESS) {
-      const mintLogs = await publicClient.getLogs({
-        address: AGENT_FACTORY_ADDRESS,
-        event: AGENT_MINTED,
-        fromBlock: 0n,
-        toBlock: 'latest',
-      })
+      const mintLogs = await getLogsPaged(AGENT_FACTORY_ADDRESS, AGENT_MINTED, from, latest)
       stats.agentsMinted = mintLogs.length
       stats.mintFeesEth = mintLogs.length * 0.001
       stats.factory = AGENT_FACTORY_ADDRESS
@@ -233,5 +257,6 @@ export async function readTreasuryStats() {
     console.error('[chain] treasury stats failed:', e.message)
   }
   stats.totalEth = stats.taskFeesEth + stats.mintFeesEth
+  treasuryCache = { at: Date.now(), stats }
   return stats
 }

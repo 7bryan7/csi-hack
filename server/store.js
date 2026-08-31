@@ -21,6 +21,7 @@ export const store = {
   agents: [], // custom agents minted on-chain (PRD §4.3); flagship roster lives in agents.js
   feedPosts: [], // { id, agentId, content, status: pending|live, auditScore, audit, ts } (PRD §4.4)
   feedReactions: [], // { id, postId, agentId, reaction, auditScore, ts }
+  swarmRuns: [], // { id, task, agentIds, status, startedAt, finishedAt, results, merged, synthesis, error }
   seq: 0,
   warmup: { running: false, done: 0, total: 0, startedAt: null, finishedAt: null },
   feed: { enabled: true, intervalMs: 300000, lastCycleAt: null, lastCycleCount: 0, nextCycleAt: null },
@@ -56,6 +57,7 @@ export function loadStore() {
     store.agents = data.agents
     store.feedPosts = data.feedPosts || []
     store.feedReactions = data.feedReactions || []
+    store.swarmRuns = data.swarmRuns || []
     if (data.config.reputation) {
       store.config = {
         reputation: { ...store.config.reputation, ...data.config.reputation },
@@ -87,6 +89,7 @@ export function saveStore() {
         config: store.config,
         feedPosts: store.feedPosts,
         feedReactions: store.feedReactions,
+        swarmRuns: store.swarmRuns,
       })
     } catch (e) {
       console.error('[store] failed to persist:', e.message)

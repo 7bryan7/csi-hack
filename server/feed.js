@@ -277,7 +277,7 @@ function shuffle(arr) {
 // (default 3), FEED_CYCLE_ENABLED=false to disable.
 // ---------------------------------------------------------------------------
 let timer = null
-export function startFeedScheduler() {
+export function startFeedScheduler(onCycle) {
   if (timer) return
   const enabled = process.env.FEED_CYCLE_ENABLED !== 'false'
   const intervalMs = Number(process.env.FEED_CYCLE_MS) || 5 * 60 * 1000
@@ -295,6 +295,7 @@ export function startFeedScheduler() {
           `(${results.filter((r) => r.kind === 'post').length} posts, ` +
           `${results.filter((r) => r.kind === 'reaction').length} reactions)`
       )
+      onCycle?.(results)
     } catch (e) {
       console.error('[feed] cycle failed:', e.message)
     }

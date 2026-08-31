@@ -177,5 +177,5 @@ src/                # React frontend
 - [x] Backend with task routing + peer audits
 - [x] Real Gemini runtime (primary, with simulated fallback)
 - [x] Real-data warm-up + JSON persistence (no synthetic seed)
-- [ ] Live WebSocket updates instead of polling refresh
-- [ ] Swarm analysis: fan one task out to 3-5 agents in parallel, merged report
+- [x] Live WebSocket updates instead of polling refresh
+- [x] Swarm analysis: fan one task out to 3-5 agents in parallel, merged report

@@ -109,6 +109,20 @@ db.exec(`
     ts       INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_reaction_post ON feed_reactions(postId);
+
+  -- Swarm analysis runs (roadmap: fan-out + merged report)
+  CREATE TABLE IF NOT EXISTS swarm_runs (
+    id         TEXT PRIMARY KEY,
+    task       TEXT NOT NULL,
+    agentIds   TEXT NOT NULL,               -- JSON array
+    status     TEXT NOT NULL,
+    startedAt  INTEGER NOT NULL,
+    finishedAt INTEGER,
+    results    TEXT,                        -- JSON array
+    merged     TEXT,
+    synthesis  TEXT,
+    error      TEXT
+  );
 `)
 
 // Schema evolution: add columns to tables created by older schema versions.
@@ -192,6 +206,13 @@ const stmts = {
     ),
     all: db.prepare('SELECT * FROM feed_reactions'),
   },
+  swarm_runs: {
+    insert: db.prepare(
+      `INSERT OR REPLACE INTO swarm_runs (id, task, agentIds, status, startedAt, finishedAt, results, merged, synthesis, error)
+       VALUES (@id, @task, @agentIds, @status, @startedAt, @finishedAt, @results, @merged, @synthesis, @error)`
+    ),
+    all: db.prepare('SELECT * FROM swarm_runs'),
+  },
 }
 
 // Row → in-memory shape (SQLite booleans are 0/1, tags are JSON strings,
@@ -211,7 +232,7 @@ function rowToAgent(row) {
   return { ...row, tags: row.tags ? JSON.parse(row.tags) : [], stage: STAGE_BY_ID[row.stage] || row.stage }
 }
 
-export function dbSaveAll({ users, agents, executions, audits, tasks, config, feedPosts, feedReactions }) {
+export function dbSaveAll({ users, agents, executions, audits, tasks, config, feedPosts, feedReactions, swarmRuns }) {
   const tx = db.transaction(() => {
     users.forEach((u) => stmts.users.insert.run(u))
     agents.forEach((a) =>
@@ -227,6 +248,13 @@ export function dbSaveAll({ users, agents, executions, audits, tasks, config, fe
     Object.entries(config).forEach(([k, v]) => stmts.config.upsert.run(k, JSON.stringify(v)))
     ;(feedPosts || []).forEach((p) => stmts.feed_posts.insert.run(p))
     ;(feedReactions || []).forEach((r) => stmts.feed_reactions.insert.run(r))
+    ;(swarmRuns || []).forEach((r) =>
+      stmts.swarm_runs.insert.run({
+        ...r,
+        agentIds: JSON.stringify(r.agentIds || []),
+        results: JSON.stringify(r.results || []),
+      })
+    )
   })
   tx()
 }
@@ -239,6 +267,11 @@ export function dbLoadAll() {
   const tasks = stmts.tasks.all.all()
   const feedPosts = stmts.feed_posts.all.all()
   const feedReactions = stmts.feed_reactions.all.all()
+  const swarmRuns = stmts.swarm_runs.all.all().map((r) => ({
+    ...r,
+    agentIds: r.agentIds ? JSON.parse(r.agentIds) : [],
+    results: r.results ? JSON.parse(r.results) : [],
+  }))
   const config = {}
   stmts.config.all.all().forEach(({ key, value }) => {
     try {
@@ -247,7 +280,7 @@ export function dbLoadAll() {
       /* ignore malformed config rows */
     }
   })
-  return { users, agents, executions, audits, tasks, config, feedPosts, feedReactions }
+  return { users, agents, executions, audits, tasks, config, feedPosts, feedReactions, swarmRuns }
 }
 
 // ---------------------------------------------------------------------------
@@ -286,13 +319,14 @@ export function dbCounts() {
     tasks: db.prepare('SELECT COUNT(*) c FROM tasks').get().c,
     users: db.prepare('SELECT COUNT(*) c FROM users').get().c,
     agents: db.prepare('SELECT COUNT(*) c FROM agents').get().c,
+    swarmRuns: db.prepare('SELECT COUNT(*) c FROM swarm_runs').get().c,
   }
 }
 
 // Highest numeric id suffix across all tables — keeps nextId() collision-free
 // even after records are deleted (counts alone would reuse ids).
 export function dbMaxSeq() {
-  const tables = ['executions', 'audits', 'tasks', 'users', 'agents', 'feed_posts', 'feed_reactions']
+  const tables = ['executions', 'audits', 'tasks', 'users', 'agents', 'feed_posts', 'feed_reactions', 'swarm_runs']
   let max = 0
   for (const t of tables) {
     const row = db.prepare(`SELECT id FROM ${t} ORDER BY id DESC LIMIT 1`).get()
